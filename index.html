@@ -22,7 +22,12 @@
 <!-- ------------------------------ COMPTEUR ------------------------------ -->
 <main id="vue-compteur" class="vue">
 
-  <section id="bloc-gps" class="carte gps" hidden>
+  <p id="alerte-https" class="alerte" hidden>
+    Cette page n'est pas servie en <b>HTTPS</b> : les navigateurs bloquent alors
+    l'accès au GPS. Ouvrez l'application depuis une adresse <code>https://</code>.
+  </p>
+
+  <section id="bloc-gps" class="carte gps">
     <h2>Autorisation GPS</h2>
     <p id="gps-explication">
       L'application mesure la distance parcourue avec le GPS de l'appareil pour
@@ -84,6 +89,19 @@
   </section>
 
   <p id="etat-gps" class="etat">GPS inactif</p>
+
+  <details id="diagnostic" class="carte">
+    <summary>Diagnostic GPS</summary>
+    <div class="ligne"><span>Page sécurisée (HTTPS)</span><b id="diag-secure">—</b></div>
+    <div class="ligne"><span>API de géolocalisation</span><b id="diag-api">—</b></div>
+    <div class="ligne"><span>Autorisation</span><b id="diag-perm">—</b></div>
+    <div class="ligne"><span>Positions</span><b id="diag-points">0</b></div>
+    <div class="ligne"><span>Dernière position</span><b id="diag-pos">—</b></div>
+    <div class="ligne"><span>Précision</span><b id="diag-precision">—</b></div>
+    <div class="ligne"><span>Vitesse GPS brute</span><b id="diag-vitesse">—</b></div>
+    <div class="ligne"><span>Dernière erreur</span><b id="diag-erreur">aucune</b></div>
+    <button id="btn-relancer" class="lien">Relancer la demande de position</button>
+  </details>
 </main>
 
 <!-- ------------------------------ RÉGLAGES ------------------------------ -->

@@ -205,3 +205,26 @@ input[type="range"] {
 }
 
 #tarif-effectif { color: var(--vert); }
+
+.alerte {
+  background: #3a2410;
+  border: 1px solid #7a4a12;
+  color: #ffd9a0;
+  border-radius: var(--rayon);
+  padding: 14px 16px;
+  margin: 0 0 14px;
+  font-size: 15px;
+}
+.alerte code { background: rgba(255, 255, 255, .08); padding: 1px 5px; border-radius: 5px; }
+
+#diagnostic .ligne {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 7px 0;
+  font-size: 14px;
+  color: var(--texte-doux);
+  border-bottom: 1px solid var(--carte-bord);
+}
+#diagnostic .ligne b { color: var(--texte); font-weight: 600; text-align: right; }
+#diagnostic .ligne b.ko { color: var(--rouge); }

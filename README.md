@@ -5,6 +5,18 @@ Application web (PWA) qui compte **en direct l'argent économisé** en roulant e
 mesurée par le **GPS de l'appareil**, ce qui la rend utilisable telle quelle
 depuis le navigateur d'une voiture type Tesla.
 
+## HTTPS obligatoire
+
+Les navigateurs ne donnent accès au GPS que depuis une **origine sécurisée** :
+`https://…` ou `http://localhost`. Ouvert autrement (fichier `file://`, adresse
+`http://` d'un réseau local), la demande d'autorisation n'apparaît pas et aucune
+position n'arrive — l'application le signale alors par un bandeau orange.
+
+Le dépôt contient un workflow `.github/workflows/pages.yml` qui publie le dossier
+sur GitHub Pages à chaque `push` sur `main`. Activez-le une fois dans
+*Settings → Pages → Source: GitHub Actions*, puis ouvrez l'URL `https://…` dans
+le véhicule.
+
 ## Fonctionnement
 
 1. L'application demande l'autorisation d'accéder à la position (bouton
@@ -15,6 +27,18 @@ depuis le navigateur d'une voiture type Tesla.
 3. Le compteur affiche l'économie du trajet, le coût électrique, le coût
    thermique équivalent, la vitesse et le CO₂ évité.
 4. « Réinitialiser » clôt le trajet et l'ajoute au cumul de tous les trajets.
+
+En cas de problème, le panneau **Diagnostic GPS** en bas du compteur indique si
+la page est sécurisée, si l'API est disponible, l'état de l'autorisation, le
+nombre de positions reçues et filtrées, la dernière position, sa précision, la
+vitesse brute renvoyée par le GPS et la dernière erreur rencontrée.
+
+Robustesse du suivi : une position est demandée immédiatement au démarrage sans
+attendre le premier événement ; si rien n'arrive au bout de 12 s, un sondage
+périodique prend le relais (certains navigateurs embarqués n'émettent jamais via
+`watchPosition`) ; sans nouveau point la vitesse retombe à zéro et l'interruption
+est signalée ; une demande d'autorisation restée sans réponse est signalée au
+bout de 8 s au lieu de rester muette.
 
 ## Calcul
 
@@ -64,9 +88,10 @@ dans le navigateur du véhicule.
 
 ## Précision
 
-Les points dont la précision dépasse 50 m sont ignorés, ainsi que les
+Les points dont la précision dépasse 100 m sont ignorés, ainsi que les
 déplacements inférieurs au bruit GPS (dérive à l'arrêt) et les sauts de position
-au-delà de 250 km/h. La distance mesurée reste légèrement inférieure à celle du
+au-delà de 250 km/h. Un déplacement filtré n'est pas perdu : le point de
+référence est conservé, la distance s'accumule jusqu'à dépasser le bruit. La distance mesurée reste légèrement inférieure à celle du
 compteur du véhicule.
 
 Les consommations livrées avec l'application sont des ordres de grandeur : pour

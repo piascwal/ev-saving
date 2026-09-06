@@ -55,9 +55,10 @@ let trajet = lire(CLE_TRAJET, { distanceM: 0, vitesse: 0 });
 let cumul  = lire(CLE_CUMUL,  { euros: 0, km: 0, co2: 0 });
 
 let veilleId = null;      // identifiant watchPosition
+let suiviActif = false;   // état demandé par l'utilisateur
 let dernierPoint = null;  // dernière position retenue
 let wakeLock = null;
-const enCours = () => veilleId !== null;
+const enCours = () => suiviActif;
 
 /* --------------------------- catalogues --------------------------- */
 
@@ -176,7 +177,19 @@ function toutAfficher() {
 
 /* ------------------------------ GPS ------------------------------ */
 
-const RAYON_TERRE = 6371000; // m
+const RAYON_TERRE = 6371000;   // m
+const PRECISION_MAX = 100;     // m : au-delà, la position n'est pas exploitable
+const SANS_SIGNAL_MS = 15000;  // au-delà, on prévient qu'aucun point n'arrive
+const ATTENTE_SONDAGE_MS = 12000; // délai avant de doubler watchPosition par un sondage
+
+// Éléments de diagnostic : sans console dans un navigateur embarqué, c'est le
+// seul moyen de savoir pourquoi rien ne bouge.
+const diag = {
+  points: 0,
+  rejets: 0,
+  derniereErreur: 'aucune',
+  derniereReception: 0,
+};
 
 function distanceEntre(a, b) {
   const rad = Math.PI / 180;
@@ -188,90 +201,188 @@ function distanceEntre(a, b) {
   return 2 * RAYON_TERRE * Math.asin(Math.sqrt(h));
 }
 
+function majDiagnostic(pos) {
+  $('#diag-secure').textContent = window.isSecureContext ? 'oui' : 'NON (HTTPS requis)';
+  $('#diag-secure').classList.toggle('ko', !window.isSecureContext);
+  $('#diag-api').textContent = 'geolocation' in navigator ? 'disponible' : 'ABSENTE';
+  $('#diag-api').classList.toggle('ko', !('geolocation' in navigator));
+  $('#diag-points').textContent = `${diag.points} reçus · ${diag.rejets} filtrés`;
+  $('#diag-erreur').textContent = diag.derniereErreur;
+  $('#diag-erreur').classList.toggle('ko', diag.derniereErreur !== 'aucune');
+  if (pos) {
+    const c = pos.coords;
+    $('#diag-pos').textContent = `${c.latitude.toFixed(5)}, ${c.longitude.toFixed(5)}`;
+    $('#diag-precision').textContent = `±${Math.round(c.accuracy ?? 0)} m`;
+    $('#diag-vitesse').textContent = Number.isFinite(c.speed) && c.speed !== null
+      ? `${(c.speed * 3.6).toFixed(0)} km/h`
+      : 'non fournie';
+  }
+}
+
+function majPermissionAffichee(etatPerm) {
+  const libelles = { granted: 'accordée', denied: 'refusée', prompt: 'à demander' };
+  $('#diag-perm').textContent = libelles[etatPerm] || etatPerm;
+  $('#diag-perm').classList.toggle('ko', etatPerm === 'denied');
+  // Le bloc d'autorisation ne disparaît qu'une fois la position réellement reçue.
+  $('#bloc-gps').hidden = etatPerm === 'granted' && diag.points > 0;
+}
+
 function surPosition(pos) {
+  diag.points += 1;
+  diag.derniereReception = Date.now();
+  diag.derniereErreur = 'aucune';
+  majDiagnostic(pos);
+
+  // Une position reçue vaut autorisation : on referme le bloc de demande.
+  $('#bloc-gps').hidden = true;
+  $('#gps-erreur').hidden = true;
+
   const point = {
     lat: pos.coords.latitude,
     lon: pos.coords.longitude,
-    t: pos.timestamp,
-    precision: pos.coords.accuracy ?? 999,
+    t: pos.timestamp || Date.now(),
+    precision: pos.coords.accuracy ?? PRECISION_MAX,
   };
 
-  // On ignore les points trop imprécis : ils font gonfler la distance à l'arrêt.
-  if (point.precision > 50) {
-    etat(`Signal GPS faible (±${Math.round(point.precision)} m)`);
+  // Les positions trop imprécises feraient gonfler la distance à l'arrêt.
+  if (point.precision > PRECISION_MAX) {
+    diag.rejets += 1;
+    etat(`Signal GPS trop imprécis (±${Math.round(point.precision)} m)`);
     return;
   }
 
-  const vitesseMesuree = pos.coords.speed; // m/s, souvent fournie en voiture
-  if (Number.isFinite(vitesseMesuree) && vitesseMesuree !== null) {
-    trajet.vitesse = Math.max(vitesseMesuree, 0) * 3.6;
-  }
+  const vitesseMesuree = pos.coords.speed; // m/s, généralement fournie en voiture
+  const vitesseFiable = Number.isFinite(vitesseMesuree) && vitesseMesuree !== null;
+  if (vitesseFiable) trajet.vitesse = Math.max(vitesseMesuree, 0) * 3.6;
 
   if (dernierPoint) {
     const d = distanceEntre(dernierPoint, point);
     const dt = (point.t - dernierPoint.t) / 1000;
     const vitesse = dt > 0 ? d / dt : 0; // m/s
 
-    const bruit = d < Math.max(5, point.precision * 0.5); // dérive à l'arrêt
+    // Tant que le déplacement reste sous le bruit du GPS, on conserve le point
+    // de référence : la distance s'accumule jusqu'à devenir significative.
+    const bruit = d < Math.max(8, point.precision * 0.6);
     const aberrant = vitesse > 70; // > 250 km/h : saut de position
+
     if (!bruit && !aberrant) {
       trajet.distanceM += d;
-      if (!Number.isFinite(vitesseMesuree) || vitesseMesuree === null) {
-        trajet.vitesse = vitesse * 3.6;
-      }
+      if (!vitesseFiable) trajet.vitesse = vitesse * 3.6;
       dernierPoint = point;
       ecrire(CLE_TRAJET, trajet);
-    } else if (bruit && dt > 8) {
-      // À l'arrêt prolongé, on recale la référence sans compter la dérive.
-      trajet.vitesse = 0;
-      dernierPoint = point;
+    } else {
+      diag.rejets += 1;
+      if (bruit && dt > 8) {
+        // Arrêt prolongé : on recale la référence sans compter la dérive.
+        if (!vitesseFiable) trajet.vitesse = 0;
+        dernierPoint = point;
+      }
     }
   } else {
     dernierPoint = point;
   }
 
-  etat(`GPS actif — précision ±${Math.round(point.precision)} m`);
+  if (enCours()) etat(`GPS actif — précision ±${Math.round(point.precision)} m`);
+  else etat('GPS prêt — appuyez sur « Démarrer le trajet »');
   majCompteur();
 }
 
 function surErreurGps(err) {
   const messages = {
-    1: "Autorisation GPS refusée. Autorisez la localisation dans les réglages du navigateur.",
-    2: "Position indisponible. Vérifiez que le GPS est actif.",
-    3: "Le GPS met trop de temps à répondre.",
+    1: "Autorisation GPS refusée. Autorisez la localisation pour ce site dans les réglages du navigateur, puis rechargez la page.",
+    2: "Position indisponible : le récepteur GPS ne renvoie rien pour l'instant.",
+    3: "Le GPS met trop de temps à répondre, nouvelle tentative en cours…",
   };
   const msg = messages[err.code] || `Erreur GPS : ${err.message}`;
+  diag.derniereErreur = msg;
+  majDiagnostic();
   etat(msg, true);
+
   if (err.code === 1) {
     arreterSuivi();
     $('#bloc-gps').hidden = false;
     const zone = $('#gps-erreur');
     zone.textContent = msg;
     zone.hidden = false;
+    etat(msg, true); // l'arrêt du suivi ne doit pas masquer la cause
+  }
+  // Les codes 2 et 3 sont transitoires : watchPosition continue de tenter.
+}
+
+const OPTIONS_GPS = { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 };
+
+let sondageId = null;      // secours si watchPosition ne délivre rien
+let attenteSondage = null;
+let batteur = null;        // rafraîchit l'affichage même sans nouveau point
+
+// Certains navigateurs embarqués n'émettent jamais via watchPosition : on
+// double alors le suivi par des appels ponctuels à getCurrentPosition.
+function demarrerSondage() {
+  if (sondageId !== null) return;
+  sondageId = setInterval(() => {
+    navigator.geolocation.getCurrentPosition(surPosition, surErreurGps, OPTIONS_GPS);
+  }, 3000);
+}
+
+function arreterSondage() {
+  if (sondageId !== null) clearInterval(sondageId);
+  sondageId = null;
+  if (attenteSondage !== null) clearTimeout(attenteSondage);
+  attenteSondage = null;
+}
+
+// Sans point depuis quelques secondes, la vitesse affichée retombe à zéro et
+// l'utilisateur est prévenu que le signal s'est interrompu.
+function battre() {
+  if (!enCours()) return;
+  const depuis = Date.now() - diag.derniereReception;
+  if (diag.derniereReception && depuis > 5000 && trajet.vitesse !== 0) {
+    trajet.vitesse = 0;
+    majCompteur();
+  }
+  if (diag.points === 0) {
+    etat('Recherche du signal GPS…');
+  } else if (depuis > SANS_SIGNAL_MS) {
+    etat(`Aucune position depuis ${Math.round(depuis / 1000)} s`, true);
   }
 }
 
 function demarrerSuivi() {
-  if (!('geolocation' in navigator)) {
-    etat("Ce navigateur ne fournit pas de position GPS.", true);
+  if (!verifierContexte()) return;
+
+  dernierPoint = null;
+  diag.derniereReception = 0;
+  suiviActif = true;
+
+  const id = navigator.geolocation.watchPosition(surPosition, surErreurGps, OPTIONS_GPS);
+  // Un refus immédiat peut avoir arrêté le suivi avant même cette affectation.
+  if (!suiviActif) {
+    navigator.geolocation.clearWatch(id);
     return;
   }
-  dernierPoint = null;
-  veilleId = navigator.geolocation.watchPosition(surPosition, surErreurGps, {
-    enableHighAccuracy: true,
-    maximumAge: 1000,
-    timeout: 20000,
-  });
+  veilleId = id;
+
+  // Un point immédiat évite d'attendre le premier événement de watchPosition.
+  navigator.geolocation.getCurrentPosition(surPosition, () => {}, OPTIONS_GPS);
+  attenteSondage = setTimeout(() => {
+    if (diag.points === 0) demarrerSondage();
+  }, ATTENTE_SONDAGE_MS);
+
+  batteur = setInterval(battre, 1000);
   etat('Recherche du signal GPS…');
   majBoutons();
   demanderWakeLock();
 }
 
 function arreterSuivi() {
+  suiviActif = false;
   if (veilleId !== null) {
     navigator.geolocation.clearWatch(veilleId);
     veilleId = null;
   }
+  arreterSondage();
+  if (batteur !== null) clearInterval(batteur);
+  batteur = null;
   dernierPoint = null;
   trajet.vitesse = 0;
   ecrire(CLE_TRAJET, trajet);
@@ -302,43 +413,96 @@ document.addEventListener('visibilitychange', () => {
 
 /* -------------------------- autorisation ------------------------- */
 
+// La géolocalisation exige un contexte sécurisé : en http:// ou file://,
+// l'appel échoue silencieusement dans plusieurs navigateurs.
+function verifierContexte() {
+  const zone = $('#gps-erreur');
+  if (!window.isSecureContext) {
+    $('#alerte-https').hidden = false;
+    $('#bloc-gps').hidden = false;
+    zone.textContent = "Le GPS n'est accessible qu'en HTTPS (ou sur localhost). Ouvrez l'application via une adresse https:// ; un fichier ouvert directement ne peut pas géolocaliser.";
+    zone.hidden = false;
+    etat('GPS indisponible : page non sécurisée', true);
+    return false;
+  }
+  if (!('geolocation' in navigator)) {
+    $('#bloc-gps').hidden = false;
+    zone.textContent = 'Ce navigateur ne fournit pas de position GPS.';
+    zone.hidden = false;
+    etat('GPS indisponible sur ce navigateur', true);
+    return false;
+  }
+  return true;
+}
+
 async function etatAutorisation() {
   if (!navigator.permissions?.query) return 'prompt';
   try {
-    const res = await navigator.permissions.query({ name: 'geolocation' });
-    return res.state;
+    // Certains navigateurs embarqués laissent la promesse en suspens :
+    // au-delà d'une seconde on considère l'autorisation comme à demander.
+    return await Promise.race([
+      navigator.permissions.query({ name: 'geolocation' }).then((r) => r.state),
+      new Promise((resoudre) => setTimeout(() => resoudre('prompt'), 1000)),
+    ]);
   } catch {
     return 'prompt';
   }
 }
 
+let surveillanceDemande = null;
+
+function demanderAutorisation() {
+  if (!verifierContexte()) return;
+  etat("Demande d'autorisation en cours…");
+  const pointsAvant = diag.points;
+
+  if (surveillanceDemande !== null) clearTimeout(surveillanceDemande);
+  surveillanceDemande = setTimeout(() => {
+    if (diag.points > pointsAvant) return;
+    const msg = "Le navigateur n'a renvoyé aucune position. Vérifiez que la localisation est autorisée pour ce site et que le GPS du véhicule est actif, puis réessayez.";
+    diag.derniereErreur = msg;
+    majDiagnostic();
+    etat(msg, true);
+    $('#bloc-gps').hidden = false;
+    const zone = $('#gps-erreur');
+    zone.textContent = msg;
+    zone.hidden = false;
+  }, 8000);
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      clearTimeout(surveillanceDemande);
+      surPosition(pos);
+      etat('GPS autorisé — prêt à démarrer');
+      majPermissionAffichee('granted');
+    },
+    (err) => {
+      clearTimeout(surveillanceDemande);
+      surErreurGps(err);
+    },
+    OPTIONS_GPS,
+  );
+}
+
 async function initAutorisation() {
+  majDiagnostic();
+  if (!window.isSecureContext || !('geolocation' in navigator)) {
+    verifierContexte();
+    majPermissionAffichee('indisponible');
+    return;
+  }
   const etatPerm = await etatAutorisation();
-  $('#bloc-gps').hidden = etatPerm === 'granted';
+  majPermissionAffichee(etatPerm);
   if (etatPerm === 'denied') {
     const zone = $('#gps-erreur');
     zone.textContent = "La localisation est bloquée pour ce site. Réautorisez-la dans les réglages du navigateur, puis rechargez la page.";
     zone.hidden = false;
   }
+  if (etatPerm === 'granted') demanderAutorisation(); // récupère un premier point
 }
 
-$('#btn-autoriser').addEventListener('click', () => {
-  if (!('geolocation' in navigator)) {
-    $('#gps-erreur').textContent = "Ce navigateur ne fournit pas de position GPS.";
-    $('#gps-erreur').hidden = false;
-    return;
-  }
-  etat('Demande d\'autorisation en cours…');
-  navigator.geolocation.getCurrentPosition(
-    () => {
-      $('#bloc-gps').hidden = true;
-      $('#gps-erreur').hidden = true;
-      etat('GPS autorisé — prêt à démarrer');
-    },
-    surErreurGps,
-    { enableHighAccuracy: true, timeout: 20000 },
-  );
-});
+$('#btn-autoriser').addEventListener('click', demanderAutorisation);
+$('#btn-relancer').addEventListener('click', demanderAutorisation);
 
 /* -------------------------- interactions ------------------------- */
 
@@ -597,8 +761,8 @@ $('#btn-perso-supprimer').addEventListener('click', () => {
 remplirSelects();
 majReglages();
 toutAfficher();
-initAutorisation();
 etat('GPS inactif');
+initAutorisation();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
