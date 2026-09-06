@@ -6,6 +6,8 @@ export const THERMIQUES = [
   { id: 'sandero-tce90', nom: 'Dacia Sandero TCe 90',       carburant: 'essence', conso: 5.7,  reelle: 6.6 },
   { id: '208-puretech',  nom: 'Peugeot 208 PureTech 100',   carburant: 'essence', conso: 5.6,  reelle: 6.6 },
   { id: 'golf-etsi',     nom: 'VW Golf 1.5 eTSI',           carburant: 'essence', conso: 5.9,  reelle: 7.0 },
+  { id: 'tiguan-etsi',   nom: 'VW Tiguan 1.5 eTSI 150',      carburant: 'essence', conso: 6.6,  reelle: 7.8 },
+  { id: '3008-puretech', nom: 'Peugeot 3008 PureTech 130',   carburant: 'essence', conso: 6.4,  reelle: 7.6 },
   { id: 'octavia-tsi',   nom: 'Skoda Octavia 1.5 TSI',      carburant: 'essence', conso: 5.8,  reelle: 6.9 },
   { id: 'corolla-hev',   nom: 'Toyota Corolla Hybride 122', carburant: 'essence', conso: 4.6,  reelle: 5.2 },
   { id: '308-bluehdi',   nom: 'Peugeot 308 BlueHDi 130',    carburant: 'diesel',  conso: 4.7,  reelle: 5.5 },
@@ -27,6 +29,7 @@ export const THERMIQUES = [
 
 // conso : consommation moyenne annoncée, kWh/100 km — reelle : observée au volant
 export const ELECTRIQUES = [
+  { id: 'modely-std',   nom: 'Tesla Model Y Standard (2026)',  conso: 14.5, reelle: 16.5 },
   { id: 'model3-prop',  nom: 'Tesla Model 3 Propulsion',      conso: 13.2, reelle: 15.0 },
   { id: 'model3-ga',    nom: 'Tesla Model 3 Grande Autonomie', conso: 14.0, reelle: 16.0 },
   { id: 'model3-perf',  nom: 'Tesla Model 3 Performance',     conso: 15.2, reelle: 18.0 },

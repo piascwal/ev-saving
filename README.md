@@ -26,13 +26,17 @@ coût électrique = distance/100 × conso (kWh/100 km) × prix électricité (�
 
 ## Configuration
 
+Par défaut, l'application compare une **Tesla Model Y Standard (2026)** à un
+**VW Tiguan 1.5 eTSI 150**, l'équivalent thermique le plus proche en gabarit et
+en usage. Les deux se changent dans les réglages.
+
 - **Véhicule thermique de référence** : une vingtaine de modèles courants
   (essence, diesel), ou **votre propre véhicule** — nom, carburant,
   consommation moyenne et consommation réelle observée.
 - **Consommation utilisée** : au choix la **consommation moyenne** annoncée
   (cycle mixte) ou la **consommation réelle observée**, modifiable au litre près.
-- **Véhicule électrique** : modèles Tesla et autres, consommation kWh/100 km
-  ajustable.
+- **Véhicule électrique** : Model Y Standard par défaut, autres Tesla et modèles
+  concurrents disponibles, consommation kWh/100 km ajustable.
 - **Prix** : essence, diesel, GPL, électricité (mettre `0` si la recharge est
   gratuite, ou le tarif Superchargeur pour l'itinérance).
 - **Écran allumé** pendant le trajet (Wake Lock), utile à bord.

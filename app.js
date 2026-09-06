@@ -9,10 +9,10 @@ const $ = (sel) => document.querySelector(sel);
 /* ------------------------------ état ------------------------------ */
 
 const configDefaut = () => ({
-  thermiqueId: 'golf-etsi',
+  thermiqueId: 'tiguan-etsi',
   modeConso: 'moyenne',        // 'moyenne' (annoncée) ou 'reelle' (observée)
   consoReelleThermique: null,  // L/100 km saisis par l'utilisateur
-  evId: 'model3-ga',
+  evId: 'modely-std',
   consoEv: null,               // kWh/100 km effectivement utilisés
   prix: { ...PRIX_DEFAUT },
   wakelock: true,
