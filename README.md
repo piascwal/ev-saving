@@ -25,7 +25,9 @@ le véhicule.
 2. « Démarrer le trajet » lance le suivi (`watchPosition`) et cumule la distance
    parcourue entre chaque point, en filtrant le bruit GPS.
 3. Le compteur affiche l'économie du trajet, le coût électrique, le coût
-   thermique équivalent, la vitesse et le CO₂ évité.
+   thermique équivalent, la vitesse et le CO₂ évité. Le troisième chiffre après
+   la virgule est grisé : il n'a pas cours monétaire et sert seulement à voir le
+   compteur avancer entre deux positions.
 4. « Réinitialiser » clôt le trajet et l'ajoute au cumul de tous les trajets.
 
 En cas de problème, le panneau **Diagnostic GPS** en bas du compteur indique si

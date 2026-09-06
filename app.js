@@ -121,6 +121,23 @@ function bilan(distanceM) {
 /* ---------------------------- formats ---------------------------- */
 
 const nfEuro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+const nfEuroFin = new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'EUR',
+  minimumFractionDigits: 3,
+  maximumFractionDigits: 3,
+});
+
+// Le millième d'euro n'a pas cours : il est affiché en gris, uniquement pour
+// voir le compteur avancer entre deux positions GPS.
+function euroAvecMillieme(montant) {
+  return nfEuroFin
+    .formatToParts(montant)
+    .map((part) => (part.type === 'fraction'
+      ? `${part.value.slice(0, 2)}<span class="millieme">${part.value.slice(2)}</span>`
+      : part.value))
+    .join('');
+}
 const nf = (n, d = 1) =>
   new Intl.NumberFormat('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
 
@@ -128,7 +145,7 @@ const nf = (n, d = 1) =>
 
 function majCompteur() {
   const b = bilan(trajet.distanceM);
-  $('#economie').textContent = nfEuro.format(b.economie);
+  $('#economie').innerHTML = euroAvecMillieme(b.economie);
   $('#economie-km').textContent =
     b.km > 0.2 ? `${nfEuro.format((b.economie / b.km) * 100)} / 100 km` : '— € / 100 km';
   $('#co2').textContent = `${nf(Math.max(b.co2, 0), 1)} kg de CO₂ évités`;

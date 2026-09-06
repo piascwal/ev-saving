@@ -228,3 +228,6 @@ input[type="range"] {
 }
 #diagnostic .ligne b { color: var(--texte); font-weight: 600; text-align: right; }
 #diagnostic .ligne b.ko { color: var(--rouge); }
+
+/* Millième d'euro : sans valeur monétaire, présent pour la lisibilité du mouvement */
+.millieme { color: var(--texte-doux); opacity: .55; }
