@@ -32,8 +32,15 @@ le véhicule.
 
 En cas de problème, le panneau **Diagnostic GPS** en bas du compteur indique si
 la page est sécurisée, si l'API est disponible, l'état de l'autorisation, le
-nombre de positions reçues et filtrées, la dernière position, sa précision, la
-vitesse brute renvoyée par le GPS et la dernière erreur rencontrée.
+nombre de positions reçues et filtrées, la source des positions, la distance
+brute, l'intervalle entre deux points, la cohérence de l'horodatage du
+récepteur, le motif du dernier filtrage et la dernière erreur rencontrée.
+
+L'intervalle entre deux points est mesuré sur l'horloge de l'appareil, à la
+réception : l'horodatage renvoyé par le récepteur n'est pas fiable partout, et
+une seconde mal mesurée suffirait à faire passer chaque segment pour un saut de
+position — la distance resterait alors à zéro alors que la vitesse, lue
+directement, continuerait d'avancer.
 
 Robustesse du suivi : une position est demandée immédiatement au démarrage sans
 attendre le premier événement ; dès que plus aucune position n'arrive pendant 8 s,

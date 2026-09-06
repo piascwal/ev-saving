@@ -86,6 +86,7 @@ function chargerConfig() {
 let config = chargerConfig();
 ecrire(CLE_CONFIG, config); // fige la reprise des anciens réglages
 let trajet = lire(CLE_TRAJET, { distanceM: 0, vitesse: 0 });
+if (!Number.isFinite(trajet.distanceM)) trajet = { distanceM: 0, vitesse: 0 };
 let cumul  = lire(CLE_CUMUL,  { euros: 0, km: 0, co2: 0 });
 
 let veilleId = null;      // identifiant watchPosition
@@ -241,6 +242,9 @@ const diag = {
   points: 0,          // positions reçues depuis l'ouverture de la page
   pointsSuivi: 0,     // positions reçues depuis le démarrage du trajet en cours
   rejets: 0,
+  sauts: 0,           // rejets « saut de position » consécutifs
+  intervalle: '—',
+  horodatage: '—',
   derniereErreur: 'aucune',
   derniereReception: 0,
   dernierFiltre: '—',
@@ -266,6 +270,8 @@ function majDiagnostic(pos) {
     `${diag.points} reçus · ${diag.pointsSuivi} depuis le départ · ${diag.rejets} filtrés`;
   $('#diag-distance').textContent = `${trajet.distanceM.toFixed(0)} m`;
   $('#diag-filtre').textContent = diag.dernierFiltre;
+  $('#diag-intervalle').textContent = diag.intervalle;
+  $('#diag-horodatage').textContent = diag.horodatage;
   $('#diag-source').textContent = diag.source;
   $('#diag-erreur').textContent = diag.derniereErreur;
   $('#diag-erreur').classList.toggle('ko', diag.derniereErreur !== 'aucune');
@@ -299,10 +305,23 @@ function surPosition(pos, source = 'watchPosition') {
   $('#bloc-gps').hidden = true;
   $('#gps-erreur').hidden = true;
 
+  // L'écart entre deux points est mesuré sur l'horloge de l'appareil, à la
+  // réception. Le timestamp fourni par le récepteur n'est pas fiable partout :
+  // unité différente, horloge figée ou décalée. Une seconde mal mesurée suffit
+  // à faire passer chaque segment pour un saut de position et à bloquer la
+  // distance à zéro, alors que la vitesse, lue directement, continue d'avancer.
+  const maintenant = Date.now();
+  const ecartHorodatage = Number.isFinite(pos.timestamp)
+    ? Math.abs(maintenant - pos.timestamp)
+    : NaN;
+  diag.horodatage = Number.isFinite(ecartHorodatage)
+    ? (ecartHorodatage < 60000 ? 'cohérent' : `décalé de ${Math.round(ecartHorodatage / 1000)} s`)
+    : 'absent';
+
   const point = {
     lat: pos.coords.latitude,
     lon: pos.coords.longitude,
-    t: pos.timestamp || Date.now(),
+    t: maintenant,
     precision: pos.coords.accuracy ?? PRECISION_MAX,
   };
 
@@ -329,14 +348,26 @@ function surPosition(pos, source = 'watchPosition') {
     const seuil = Math.max(6, Math.min(point.precision, PRECISION_BRUIT_MAX) * 0.5);
     const aberrant = dt > 0 && vitesseCalculee > 70; // > 250 km/h : saut de position
 
+    diag.intervalle = `${dt.toFixed(1)} s`;
+
     if (aberrant) {
+      // Un point de référence erroné — première position captée ailleurs, fix
+      // en cache — rendrait tous les suivants aberrants et figerait la distance
+      // définitivement. Après trois rejets d'affilée, on repart d'ici.
       diag.rejets += 1;
+      diag.sauts += 1;
       diag.dernierFiltre = `saut de position (${Math.round(vitesseCalculee * 3.6)} km/h)`;
+      if (diag.sauts >= 3) {
+        dernierPoint = point;
+        diag.sauts = 0;
+        diag.dernierFiltre += ' — référence recalée';
+      }
     } else if (d >= seuil) {
       // Déplacement significatif : distance mesurée entre les deux points.
       trajet.distanceM += d;
       if (!vitesseFiable) trajet.vitesse = vitesseCalculee * 3.6;
       dernierPoint = point;
+      diag.sauts = 0;
       diag.dernierFiltre = '—';
       ecrire(CLE_TRAJET, trajet);
     } else if (vitesseFiable && vitesseMesuree > 1.5 && dt > 0 && dt < 30) {
@@ -344,6 +375,7 @@ function surPosition(pos, source = 'watchPosition') {
       // vitesse réelle : on intègre cette vitesse plutôt que de tout perdre.
       trajet.distanceM += vitesseMesuree * dt;
       dernierPoint = point;
+      diag.sauts = 0;
       diag.dernierFiltre = 'distance estimée à partir de la vitesse';
       ecrire(CLE_TRAJET, trajet);
     } else {
