@@ -34,11 +34,12 @@ nombre de positions reçues et filtrées, la dernière position, sa précision, 
 vitesse brute renvoyée par le GPS et la dernière erreur rencontrée.
 
 Robustesse du suivi : une position est demandée immédiatement au démarrage sans
-attendre le premier événement ; si rien n'arrive au bout de 12 s, un sondage
-périodique prend le relais (certains navigateurs embarqués n'émettent jamais via
-`watchPosition`) ; sans nouveau point la vitesse retombe à zéro et l'interruption
-est signalée ; une demande d'autorisation restée sans réponse est signalée au
-bout de 8 s au lieu de rester muette.
+attendre le premier événement ; dès que plus aucune position n'arrive pendant 8 s,
+des appels ponctuels prennent le relais (certains navigateurs embarqués n'émettent
+jamais via `watchPosition`) ; l'affichage est rafraîchi chaque seconde ; sans
+nouveau point la vitesse retombe à zéro et l'interruption est signalée ; une
+demande d'autorisation restée sans réponse est signalée au bout de 8 s au lieu de
+rester muette.
 
 ## Calcul
 
@@ -88,10 +89,13 @@ dans le navigateur du véhicule.
 
 ## Précision
 
-Les points dont la précision dépasse 100 m sont ignorés, ainsi que les
-déplacements inférieurs au bruit GPS (dérive à l'arrêt) et les sauts de position
-au-delà de 250 km/h. Un déplacement filtré n'est pas perdu : le point de
-référence est conservé, la distance s'accumule jusqu'à dépasser le bruit. La distance mesurée reste légèrement inférieure à celle du
+Les points dont la précision dépasse 200 m sont ignorés, ainsi que les sauts de
+position au-delà de 250 km/h. En dessous, le seuil de bruit vaut la moitié de la
+précision annoncée, plafonné à 15 m : un récepteur pessimiste ne fige donc pas la
+distance. Un déplacement sous ce seuil n'est pas perdu — le point de référence est
+conservé et la distance s'accumule jusqu'à le dépasser ; et si le récepteur
+annonce une vitesse réelle, celle-ci est intégrée sur l'intervalle plutôt que
+d'attendre. La distance mesurée reste légèrement inférieure à celle du
 compteur du véhicule.
 
 Les consommations livrées avec l'application sont des ordres de grandeur : pour

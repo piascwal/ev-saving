@@ -132,7 +132,7 @@ function majCompteur() {
   $('#economie-km').textContent =
     b.km > 0.2 ? `${nfEuro.format((b.economie / b.km) * 100)} / 100 km` : '— € / 100 km';
   $('#co2').textContent = `${nf(Math.max(b.co2, 0), 1)} kg de CO₂ évités`;
-  $('#distance').innerHTML = `${nf(b.km, 1)}<small> km</small>`;
+  $('#distance').innerHTML = `${nf(b.km, b.km < 10 ? 2 : 1)}<small> km</small>`;
   $('#vitesse').innerHTML = `${nf(trajet.vitesse || 0, 0)}<small> km/h</small>`;
   $('#cout-ev').innerHTML = `${nf(b.coutEv, 2)}<small> €</small>`;
   $('#cout-th').innerHTML = `${nf(b.coutTh, 2)}<small> €</small>`;
@@ -178,17 +178,22 @@ function toutAfficher() {
 /* ------------------------------ GPS ------------------------------ */
 
 const RAYON_TERRE = 6371000;   // m
-const PRECISION_MAX = 100;     // m : au-delà, la position n'est pas exploitable
+const PRECISION_MAX = 200;     // m : au-delà, la position n'est pas exploitable
+const PRECISION_BRUIT_MAX = 30; // m : plafond du seuil de bruit, une précision
+                                // annoncée pessimiste ne doit pas figer la distance
 const SANS_SIGNAL_MS = 15000;  // au-delà, on prévient qu'aucun point n'arrive
-const ATTENTE_SONDAGE_MS = 12000; // délai avant de doubler watchPosition par un sondage
+const SILENCE_SONDAGE_MS = 8000; // sans point depuis ce délai, le sondage prend le relais
 
 // Éléments de diagnostic : sans console dans un navigateur embarqué, c'est le
 // seul moyen de savoir pourquoi rien ne bouge.
 const diag = {
-  points: 0,
+  points: 0,          // positions reçues depuis l'ouverture de la page
+  pointsSuivi: 0,     // positions reçues depuis le démarrage du trajet en cours
   rejets: 0,
   derniereErreur: 'aucune',
   derniereReception: 0,
+  dernierFiltre: '—',
+  source: '—',
 };
 
 function distanceEntre(a, b) {
@@ -206,7 +211,11 @@ function majDiagnostic(pos) {
   $('#diag-secure').classList.toggle('ko', !window.isSecureContext);
   $('#diag-api').textContent = 'geolocation' in navigator ? 'disponible' : 'ABSENTE';
   $('#diag-api').classList.toggle('ko', !('geolocation' in navigator));
-  $('#diag-points').textContent = `${diag.points} reçus · ${diag.rejets} filtrés`;
+  $('#diag-points').textContent =
+    `${diag.points} reçus · ${diag.pointsSuivi} depuis le départ · ${diag.rejets} filtrés`;
+  $('#diag-distance').textContent = `${trajet.distanceM.toFixed(0)} m`;
+  $('#diag-filtre').textContent = diag.dernierFiltre;
+  $('#diag-source').textContent = diag.source;
   $('#diag-erreur').textContent = diag.derniereErreur;
   $('#diag-erreur').classList.toggle('ko', diag.derniereErreur !== 'aucune');
   if (pos) {
@@ -227,8 +236,10 @@ function majPermissionAffichee(etatPerm) {
   $('#bloc-gps').hidden = etatPerm === 'granted' && diag.points > 0;
 }
 
-function surPosition(pos) {
+function surPosition(pos, source = 'watchPosition') {
   diag.points += 1;
+  if (enCours()) diag.pointsSuivi += 1;
+  diag.source = source;
   diag.derniereReception = Date.now();
   diag.derniereErreur = 'aucune';
   majDiagnostic(pos);
@@ -247,7 +258,9 @@ function surPosition(pos) {
   // Les positions trop imprécises feraient gonfler la distance à l'arrêt.
   if (point.precision > PRECISION_MAX) {
     diag.rejets += 1;
+    diag.dernierFiltre = `précision ±${Math.round(point.precision)} m`;
     etat(`Signal GPS trop imprécis (±${Math.round(point.precision)} m)`);
+    majDiagnostic(pos);
     return;
   }
 
@@ -258,21 +271,36 @@ function surPosition(pos) {
   if (dernierPoint) {
     const d = distanceEntre(dernierPoint, point);
     const dt = (point.t - dernierPoint.t) / 1000;
-    const vitesse = dt > 0 ? d / dt : 0; // m/s
+    const vitesseCalculee = dt > 0 ? d / dt : 0; // m/s
 
-    // Tant que le déplacement reste sous le bruit du GPS, on conserve le point
-    // de référence : la distance s'accumule jusqu'à devenir significative.
-    const bruit = d < Math.max(8, point.precision * 0.6);
-    const aberrant = vitesse > 70; // > 250 km/h : saut de position
+    // Le seuil de bruit est plafonné : certains récepteurs annoncent une
+    // précision très pessimiste tout en suivant correctement la route.
+    const seuil = Math.max(6, Math.min(point.precision, PRECISION_BRUIT_MAX) * 0.5);
+    const aberrant = dt > 0 && vitesseCalculee > 70; // > 250 km/h : saut de position
 
-    if (!bruit && !aberrant) {
+    if (aberrant) {
+      diag.rejets += 1;
+      diag.dernierFiltre = `saut de position (${Math.round(vitesseCalculee * 3.6)} km/h)`;
+    } else if (d >= seuil) {
+      // Déplacement significatif : distance mesurée entre les deux points.
       trajet.distanceM += d;
-      if (!vitesseFiable) trajet.vitesse = vitesse * 3.6;
+      if (!vitesseFiable) trajet.vitesse = vitesseCalculee * 3.6;
       dernierPoint = point;
+      diag.dernierFiltre = '—';
+      ecrire(CLE_TRAJET, trajet);
+    } else if (vitesseFiable && vitesseMesuree > 1.5 && dt > 0 && dt < 30) {
+      // Déplacement sous le bruit du GPS alors que le récepteur annonce une
+      // vitesse réelle : on intègre cette vitesse plutôt que de tout perdre.
+      trajet.distanceM += vitesseMesuree * dt;
+      dernierPoint = point;
+      diag.dernierFiltre = 'distance estimée à partir de la vitesse';
       ecrire(CLE_TRAJET, trajet);
     } else {
+      // Sous le seuil : le point de référence est conservé, la distance
+      // s'accumule jusqu'à devenir significative.
       diag.rejets += 1;
-      if (bruit && dt > 8) {
+      diag.dernierFiltre = `sous le bruit (${d.toFixed(1)} m < ${seuil.toFixed(0)} m)`;
+      if (dt > 8) {
         // Arrêt prolongé : on recale la référence sans compter la dérive.
         if (!vitesseFiable) trajet.vitesse = 0;
         dernierPoint = point;
@@ -312,39 +340,47 @@ function surErreurGps(err) {
 const OPTIONS_GPS = { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 };
 
 let sondageId = null;      // secours si watchPosition ne délivre rien
-let attenteSondage = null;
 let batteur = null;        // rafraîchit l'affichage même sans nouveau point
 
 // Certains navigateurs embarqués n'émettent jamais via watchPosition : on
 // double alors le suivi par des appels ponctuels à getCurrentPosition.
 function demarrerSondage() {
   if (sondageId !== null) return;
+  diag.source = 'sondage (watchPosition muet)';
   sondageId = setInterval(() => {
-    navigator.geolocation.getCurrentPosition(surPosition, surErreurGps, OPTIONS_GPS);
-  }, 3000);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => surPosition(pos, 'sondage'),
+      surErreurGps,
+      { ...OPTIONS_GPS, maximumAge: 0 },
+    );
+  }, 2000);
 }
 
 function arreterSondage() {
   if (sondageId !== null) clearInterval(sondageId);
   sondageId = null;
-  if (attenteSondage !== null) clearTimeout(attenteSondage);
-  attenteSondage = null;
 }
 
 // Sans point depuis quelques secondes, la vitesse affichée retombe à zéro et
 // l'utilisateur est prévenu que le signal s'est interrompu.
 function battre() {
   if (!enCours()) return;
-  const depuis = Date.now() - diag.derniereReception;
-  if (diag.derniereReception && depuis > 5000 && trajet.vitesse !== 0) {
+  const depuis = diag.derniereReception ? Date.now() - diag.derniereReception : Infinity;
+
+  // watchPosition reste muet chez plusieurs navigateurs embarqués : dès que le
+  // flux se tarit, les appels ponctuels prennent le relais.
+  if (depuis > SILENCE_SONDAGE_MS) demarrerSondage();
+
+  if (depuis > 5000 && trajet.vitesse !== 0) {
     trajet.vitesse = 0;
-    majCompteur();
   }
-  if (diag.points === 0) {
+  if (diag.pointsSuivi === 0) {
     etat('Recherche du signal GPS…');
   } else if (depuis > SANS_SIGNAL_MS) {
     etat(`Aucune position depuis ${Math.round(depuis / 1000)} s`, true);
   }
+  majCompteur();   // l'affichage reste vivant même sans nouveau point
+  majDiagnostic();
 }
 
 function demarrerSuivi() {
@@ -352,6 +388,8 @@ function demarrerSuivi() {
 
   dernierPoint = null;
   diag.derniereReception = 0;
+  diag.pointsSuivi = 0;
+  diag.dernierFiltre = '—';
   suiviActif = true;
 
   const id = navigator.geolocation.watchPosition(surPosition, surErreurGps, OPTIONS_GPS);
@@ -363,10 +401,11 @@ function demarrerSuivi() {
   veilleId = id;
 
   // Un point immédiat évite d'attendre le premier événement de watchPosition.
-  navigator.geolocation.getCurrentPosition(surPosition, () => {}, OPTIONS_GPS);
-  attenteSondage = setTimeout(() => {
-    if (diag.points === 0) demarrerSondage();
-  }, ATTENTE_SONDAGE_MS);
+  navigator.geolocation.getCurrentPosition(
+    (pos) => surPosition(pos, 'getCurrentPosition'),
+    () => {},
+    { ...OPTIONS_GPS, maximumAge: 0 },
+  );
 
   batteur = setInterval(battre, 1000);
   etat('Recherche du signal GPS…');
