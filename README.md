@@ -58,13 +58,14 @@ Par défaut, l'application compare une **Tesla Model Y Standard (2026)** à un
 en usage. Les deux se changent dans les réglages.
 
 - **Véhicule thermique de référence** : une vingtaine de modèles courants
-  (essence, diesel), ou **votre propre véhicule** — nom, carburant,
-  consommation moyenne et consommation réelle observée.
+  (E10, SP98, gazole), ou **votre propre véhicule** — nom, carburant (E10, SP98,
+  gazole, E85, GPL), consommation moyenne et consommation réelle observée.
 - **Consommation utilisée** : au choix la **consommation moyenne** annoncée
   (cycle mixte) ou la **consommation réelle observée**, modifiable au litre près.
 - **Véhicule électrique** : Model Y Standard par défaut, autres Tesla et modèles
   concurrents disponibles, consommation kWh/100 km ajustable.
-- **Prix des carburants** : essence, diesel, GPL.
+- **Prix à la pompe** : gazole, SP98, SP95-E10, E85 et GPL, au millième d'euro.
+  Le prix appliqué est celui du carburant du véhicule de référence choisi.
 - **Prix de l'électricité** : au choix un **prix unique** du kWh, ou un **mix
   domicile / recharge publique** avec le curseur de répartition — le prix retenu
   est alors la moyenne pondérée des deux. Raccourcis pour les tarifs courants

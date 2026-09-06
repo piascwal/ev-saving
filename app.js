@@ -1,4 +1,7 @@
-import { THERMIQUES, ELECTRIQUES, PRIX_DEFAUT, TARIFS_ELEC, CARBURANTS, CO2 } from './vehicles.js';
+import {
+  THERMIQUES, ELECTRIQUES, PRIX_DEFAUT, PRIX_ANCIENS, TARIFS_ELEC,
+  CARBURANTS, CARBURANTS_COURT, CO2,
+} from './vehicles.js';
 
 const CLE_CONFIG = 'ev-saving:config:v1';
 const CLE_TRAJET = 'ev-saving:trajet:v1';
@@ -14,7 +17,13 @@ const configDefaut = () => ({
   consoReelleThermique: null,  // L/100 km saisis par l'utilisateur
   evId: 'modely-std',
   consoEv: null,               // kWh/100 km effectivement utilisés
-  prix: { essence: PRIX_DEFAUT.essence, diesel: PRIX_DEFAUT.diesel, gpl: PRIX_DEFAUT.gpl },
+  prix: {
+    gazole: PRIX_DEFAUT.gazole,
+    sp98: PRIX_DEFAUT.sp98,
+    e10: PRIX_DEFAUT.e10,
+    e85: PRIX_DEFAUT.e85,
+    gpl: PRIX_DEFAUT.gpl,
+  },
   tarif: {
     mode: 'unique',              // 'unique' ou 'mix' domicile / recharge publique
     unique: PRIX_DEFAUT.electricite,
@@ -39,7 +48,12 @@ const ecrire = (cle, valeur) => {
 };
 
 function chargerConfig() {
-  const cfg = lire(CLE_CONFIG, configDefaut());
+  const defauts = configDefaut();
+  const cfg = lire(CLE_CONFIG, defauts);
+  // lire() fusionne au premier niveau : les objets imbriqués enregistrés par une
+  // version antérieure doivent être complétés clé par clé.
+  cfg.prix = { ...defauts.prix, ...cfg.prix };
+  cfg.tarif = { ...defauts.tarif, ...cfg.tarif };
   // Reprise des configurations créées avant le réglage tarifaire détaillé.
   const ancienPrix = cfg.prix?.electricite;
   if (cfg.tarifConfigure !== true) {
@@ -47,10 +61,30 @@ function chargerConfig() {
     cfg.tarifConfigure = true;
   }
   delete cfg.prix.electricite;
+
+  // Les carburants « essence » et « diesel » sont devenus E10 et gazole, et les
+  // prix de départ ont changé : on ne conserve que ceux réellement modifiés.
+  if (cfg.carburantsMigres !== true) {
+    if (Number.isFinite(cfg.prix.essence) && cfg.prix.essence !== PRIX_ANCIENS.essence) {
+      cfg.prix.e10 = cfg.prix.essence;
+    }
+    if (Number.isFinite(cfg.prix.diesel) && cfg.prix.diesel !== PRIX_ANCIENS.diesel) {
+      cfg.prix.gazole = cfg.prix.diesel;
+    }
+    if (cfg.prix.gpl === PRIX_ANCIENS.gpl) cfg.prix.gpl = PRIX_DEFAUT.gpl;
+    for (const v of cfg.perso) {
+      if (v.carburant === 'essence') v.carburant = 'e10';
+      if (v.carburant === 'diesel') v.carburant = 'gazole';
+    }
+    cfg.carburantsMigres = true;
+  }
+  delete cfg.prix.essence;
+  delete cfg.prix.diesel;
   return cfg;
 }
 
 let config = chargerConfig();
+ecrire(CLE_CONFIG, config); // fige la reprise des anciens réglages
 let trajet = lire(CLE_TRAJET, { distanceM: 0, vitesse: 0 });
 let cumul  = lire(CLE_CUMUL,  { euros: 0, km: 0, co2: 0 });
 
@@ -160,12 +194,12 @@ function majResume() {
   const th = thermiqueActif();
   const ev = evActif();
   const mode = config.modeConso === 'reelle' ? 'réelle' : 'moyenne';
-  $('#etiquette-thermique').textContent = `Coût ${th.carburant}`;
+  $('#etiquette-thermique').textContent = `Coût ${CARBURANTS_COURT[th.carburant] || th.carburant}`;
   $('#resume-thermique').textContent =
     `${th.nom} — ${nf(consoThermique(), 1)} L/100 (${mode})`;
   $('#resume-ev').textContent = `${ev.nom} — ${nf(consoElectrique(), 1)} kWh/100`;
   $('#resume-prix').textContent =
-    `${nf(prixCarburant(), 2)} €/L · ${nf(prixElectricite(), 3)} €/kWh`;
+    `${nf(prixCarburant(), 3)} €/L · ${nf(prixElectricite(), 3)} €/kWh`;
 }
 
 function majCumul() {
@@ -631,9 +665,7 @@ function majReglages() {
   $('#conso-ev').value = nf(consoElectrique(), 1).replace(',', '.');
   $('#btn-perso-supprimer').hidden = !th.id.startsWith('perso-');
   document.querySelector(`input[name="mode-conso"][value="${config.modeConso}"]`).checked = true;
-  $('#prix-essence').value = config.prix.essence;
-  $('#prix-diesel').value = config.prix.diesel;
-  $('#prix-gpl').value = config.prix.gpl;
+  for (const [sel, cle] of Object.entries(champsPrix)) $(sel).value = config.prix[cle];
   $('#opt-wakelock').checked = config.wakelock;
   majTarif();
 }
@@ -680,8 +712,10 @@ $('#conso-ev').addEventListener('input', (e) => {
 });
 
 const champsPrix = {
-  '#prix-essence': 'essence',
-  '#prix-diesel': 'diesel',
+  '#prix-gazole': 'gazole',
+  '#prix-sp98': 'sp98',
+  '#prix-e10': 'e10',
+  '#prix-e85': 'e85',
   '#prix-gpl': 'gpl',
 };
 for (const [sel, cle] of Object.entries(champsPrix)) {

@@ -142,8 +142,10 @@
         <input id="perso-nom" type="text" placeholder="Ma Golf GTI"></label>
       <label class="champ"><span>Carburant</span>
         <select id="perso-carburant">
-          <option value="essence">Essence (SP95-E10)</option>
-          <option value="diesel">Diesel (gazole)</option>
+          <option value="e10">SP95-E10</option>
+          <option value="sp98">SP98</option>
+          <option value="gazole">Gazole</option>
+          <option value="e85">E85 (superéthanol)</option>
           <option value="gpl">GPL</option>
         </select></label>
       <label class="champ"><span>Consommation moyenne (L/100 km)</span>
@@ -170,13 +172,19 @@
   </section>
 
   <section class="carte">
-    <h2>Prix</h2>
-    <label class="champ"><span>Essence (€/L)</span>
-      <input id="prix-essence" type="number" inputmode="decimal" step="0.01" min="0"></label>
-    <label class="champ"><span>Diesel (€/L)</span>
-      <input id="prix-diesel" type="number" inputmode="decimal" step="0.01" min="0"></label>
+    <h2>Prix à la pompe</h2>
+    <label class="champ"><span>Gazole (€/L)</span>
+      <input id="prix-gazole" type="number" inputmode="decimal" step="0.001" min="0"></label>
+    <label class="champ"><span>SP98 (€/L)</span>
+      <input id="prix-sp98" type="number" inputmode="decimal" step="0.001" min="0"></label>
+    <label class="champ"><span>SP95-E10 (€/L)</span>
+      <input id="prix-e10" type="number" inputmode="decimal" step="0.001" min="0"></label>
+    <label class="champ"><span>E85 superéthanol (€/L)</span>
+      <input id="prix-e85" type="number" inputmode="decimal" step="0.001" min="0"></label>
     <label class="champ"><span>GPL (€/L)</span>
-      <input id="prix-gpl" type="number" inputmode="decimal" step="0.01" min="0"></label>
+      <input id="prix-gpl" type="number" inputmode="decimal" step="0.001" min="0"></label>
+    <p class="aide">Le prix utilisé est celui du carburant du véhicule de
+      référence sélectionné.</p>
   </section>
 
   <section class="carte">
