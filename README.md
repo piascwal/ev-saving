@@ -37,8 +37,12 @@ en usage. Les deux se changent dans les réglages.
   (cycle mixte) ou la **consommation réelle observée**, modifiable au litre près.
 - **Véhicule électrique** : Model Y Standard par défaut, autres Tesla et modèles
   concurrents disponibles, consommation kWh/100 km ajustable.
-- **Prix** : essence, diesel, GPL, électricité (mettre `0` si la recharge est
-  gratuite, ou le tarif Superchargeur pour l'itinérance).
+- **Prix des carburants** : essence, diesel, GPL.
+- **Prix de l'électricité** : au choix un **prix unique** du kWh, ou un **mix
+  domicile / recharge publique** avec le curseur de répartition — le prix retenu
+  est alors la moyenne pondérée des deux. Raccourcis pour les tarifs courants
+  (Base, heures creuses, Tempo bleu HC, Superchargeur, Ionity, borne AC),
+  chacun restant modifiable au chiffre près ; `0` si la recharge est gratuite.
 - **Écran allumé** pendant le trajet (Wake Lock), utile à bord.
 
 Tous les réglages, le trajet en cours et le cumul sont conservés dans le

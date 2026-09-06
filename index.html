@@ -156,10 +156,46 @@
       <input id="prix-diesel" type="number" inputmode="decimal" step="0.01" min="0"></label>
     <label class="champ"><span>GPL (€/L)</span>
       <input id="prix-gpl" type="number" inputmode="decimal" step="0.01" min="0"></label>
-    <label class="champ"><span>Électricité (€/kWh)</span>
-      <input id="prix-elec" type="number" inputmode="decimal" step="0.001" min="0"></label>
-    <p class="aide">Mettez 0 €/kWh si vous rechargez gratuitement, ou le tarif du
-      Superchargeur si vous roulez surtout en itinérance.</p>
+  </section>
+
+  <section class="carte">
+    <h2>Prix de l'électricité</h2>
+
+    <fieldset class="choix">
+      <legend>Comment vous rechargez</legend>
+      <label class="radio">
+        <input type="radio" name="mode-tarif" value="unique" checked>
+        <span>Un seul prix du kWh</span>
+      </label>
+      <label class="radio">
+        <input type="radio" name="mode-tarif" value="mix">
+        <span>Mix domicile / recharge publique</span>
+      </label>
+    </fieldset>
+
+    <div id="bloc-tarif-unique">
+      <label class="champ"><span>Prix du kWh (€)</span>
+        <input id="tarif-unique" type="number" inputmode="decimal" step="0.0001" min="0"></label>
+      <div class="raccourcis" id="raccourcis-unique"></div>
+    </div>
+
+    <div id="bloc-tarif-mix" hidden>
+      <label class="champ"><span>À domicile (€/kWh)</span>
+        <input id="tarif-domicile" type="number" inputmode="decimal" step="0.0001" min="0"></label>
+      <div class="raccourcis" id="raccourcis-domicile"></div>
+
+      <label class="champ"><span>En recharge publique (€/kWh)</span>
+        <input id="tarif-public" type="number" inputmode="decimal" step="0.0001" min="0"></label>
+      <div class="raccourcis" id="raccourcis-public"></div>
+
+      <label class="champ">
+        <span>Part rechargée à domicile : <b id="part-valeur">85 %</b></span>
+        <input id="part-domicile" type="range" min="0" max="100" step="5">
+      </label>
+    </div>
+
+    <p class="aide">Prix retenu pour le calcul : <b id="tarif-effectif">—</b>.
+      Mettez 0 €/kWh si votre recharge ne vous coûte rien (solaire, borne au travail).</p>
   </section>
 
   <section class="carte">

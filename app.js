@@ -1,4 +1,4 @@
-import { THERMIQUES, ELECTRIQUES, PRIX_DEFAUT, CARBURANTS, CO2 } from './vehicles.js';
+import { THERMIQUES, ELECTRIQUES, PRIX_DEFAUT, TARIFS_ELEC, CARBURANTS, CO2 } from './vehicles.js';
 
 const CLE_CONFIG = 'ev-saving:config:v1';
 const CLE_TRAJET = 'ev-saving:trajet:v1';
@@ -14,7 +14,14 @@ const configDefaut = () => ({
   consoReelleThermique: null,  // L/100 km saisis par l'utilisateur
   evId: 'modely-std',
   consoEv: null,               // kWh/100 km effectivement utilisés
-  prix: { ...PRIX_DEFAUT },
+  prix: { essence: PRIX_DEFAUT.essence, diesel: PRIX_DEFAUT.diesel, gpl: PRIX_DEFAUT.gpl },
+  tarif: {
+    mode: 'unique',              // 'unique' ou 'mix' domicile / recharge publique
+    unique: PRIX_DEFAUT.electricite,
+    domicile: 0.1470,            // heures creuses
+    public: 0.39,                // Superchargeur
+    partDomicile: 85,            // % des kWh rechargés à domicile
+  },
   wakelock: true,
   perso: [],                   // véhicules thermiques créés par l'utilisateur
 });
@@ -31,7 +38,19 @@ const ecrire = (cle, valeur) => {
   try { localStorage.setItem(cle, JSON.stringify(valeur)); } catch { /* stockage indisponible */ }
 };
 
-let config = lire(CLE_CONFIG, configDefaut());
+function chargerConfig() {
+  const cfg = lire(CLE_CONFIG, configDefaut());
+  // Reprise des configurations créées avant le réglage tarifaire détaillé.
+  const ancienPrix = cfg.prix?.electricite;
+  if (cfg.tarifConfigure !== true) {
+    if (Number.isFinite(ancienPrix)) cfg.tarif.unique = ancienPrix;
+    cfg.tarifConfigure = true;
+  }
+  delete cfg.prix.electricite;
+  return cfg;
+}
+
+let config = chargerConfig();
 let trajet = lire(CLE_TRAJET, { distanceM: 0, vitesse: 0 });
 let cumul  = lire(CLE_CUMUL,  { euros: 0, km: 0, co2: 0 });
 
@@ -66,6 +85,18 @@ function consoElectrique() {
   return config.modeConso === 'reelle' ? v.reelle : v.conso;
 }
 
+// Prix du kWh réellement payé, moyenne pondérée en mode mix
+function prixElectricite() {
+  const t = config.tarif;
+  if (t.mode === 'mix') {
+    const part = Math.min(Math.max(Number(t.partDomicile) || 0, 0), 100) / 100;
+    const domicile = Math.max(Number(t.domicile) || 0, 0);
+    const public_ = Math.max(Number(t.public) || 0, 0);
+    return domicile * part + public_ * (1 - part);
+  }
+  return Math.max(Number(t.unique) || 0, 0);
+}
+
 function prixCarburant() {
   const v = thermiqueActif();
   const p = Number(config.prix[v.carburant]);
@@ -81,7 +112,7 @@ function bilan(distanceM) {
   const kwh = centaines * consoElectrique();
   const carburant = thermiqueActif().carburant;
   const coutTh = litres * prixCarburant();
-  const coutEv = kwh * (Number(config.prix.electricite) || 0);
+  const coutEv = kwh * prixElectricite();
   const co2 = litres * CO2[carburant] - kwh * CO2.electricite;
   return { km, litres, kwh, coutTh, coutEv, economie: coutTh - coutEv, co2 };
 }
@@ -116,7 +147,7 @@ function majResume() {
     `${th.nom} — ${nf(consoThermique(), 1)} L/100 (${mode})`;
   $('#resume-ev').textContent = `${ev.nom} — ${nf(consoElectrique(), 1)} kWh/100`;
   $('#resume-prix').textContent =
-    `${nf(prixCarburant(), 2)} €/L · ${nf(Number(config.prix.electricite) || 0, 3)} €/kWh`;
+    `${nf(prixCarburant(), 2)} €/L · ${nf(prixElectricite(), 3)} €/kWh`;
 }
 
 function majCumul() {
@@ -383,8 +414,8 @@ function majReglages() {
   $('#prix-essence').value = config.prix.essence;
   $('#prix-diesel').value = config.prix.diesel;
   $('#prix-gpl').value = config.prix.gpl;
-  $('#prix-elec').value = config.prix.electricite;
   $('#opt-wakelock').checked = config.wakelock;
+  majTarif();
 }
 
 function enregistrer() {
@@ -432,7 +463,6 @@ const champsPrix = {
   '#prix-essence': 'essence',
   '#prix-diesel': 'diesel',
   '#prix-gpl': 'gpl',
-  '#prix-elec': 'electricite',
 };
 for (const [sel, cle] of Object.entries(champsPrix)) {
   $(sel).addEventListener('input', (e) => {
@@ -441,6 +471,76 @@ for (const [sel, cle] of Object.entries(champsPrix)) {
     enregistrer();
   });
 }
+
+/* ---------------------- tarif de l'électricité -------------------- */
+
+function majTarif() {
+  const t = config.tarif;
+  document.querySelector(`input[name="mode-tarif"][value="${t.mode}"]`).checked = true;
+  $('#bloc-tarif-unique').hidden = t.mode !== 'unique';
+  $('#bloc-tarif-mix').hidden = t.mode !== 'mix';
+  $('#tarif-unique').value = t.unique;
+  $('#tarif-domicile').value = t.domicile;
+  $('#tarif-public').value = t.public;
+  $('#part-domicile').value = t.partDomicile;
+  $('#part-valeur').textContent = `${t.partDomicile} %`;
+  $('#tarif-effectif').textContent = `${nf(prixElectricite(), 4)} €/kWh`;
+  document.querySelectorAll('.raccourcis .puce').forEach((b) => {
+    b.classList.toggle('actif', Math.abs(Number(b.dataset.prix) - Number(t[b.dataset.cible])) < 1e-9);
+  });
+}
+
+// Boutons de tarifs courants : un appui remplit le champ correspondant.
+function poserRaccourcis(conteneur, tarifs, cible) {
+  const zone = $(conteneur);
+  zone.innerHTML = '';
+  for (const tarif of tarifs) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'puce';
+    b.dataset.prix = tarif.prix;
+    b.dataset.cible = cible;
+    b.textContent = tarif.prix > 0 ? `${tarif.nom} · ${nf(tarif.prix, 4)} €` : tarif.nom;
+    b.addEventListener('click', () => {
+      config.tarif[cible] = tarif.prix;
+      enregistrer();
+      majTarif();
+    });
+    zone.append(b);
+  }
+}
+
+poserRaccourcis('#raccourcis-unique', [...TARIFS_ELEC.domicile, TARIFS_ELEC.public[0]], 'unique');
+poserRaccourcis('#raccourcis-domicile', TARIFS_ELEC.domicile, 'domicile');
+poserRaccourcis('#raccourcis-public', TARIFS_ELEC.public, 'public');
+
+document.querySelectorAll('input[name="mode-tarif"]').forEach((r) => {
+  r.addEventListener('change', () => {
+    config.tarif.mode = document.querySelector('input[name="mode-tarif"]:checked').value;
+    enregistrer();
+    majTarif();
+  });
+});
+
+for (const [sel, cle] of Object.entries({
+  '#tarif-unique': 'unique',
+  '#tarif-domicile': 'domicile',
+  '#tarif-public': 'public',
+})) {
+  $(sel).addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    config.tarif[cle] = Number.isFinite(v) && v >= 0 ? v : 0;
+    enregistrer();
+    $('#tarif-effectif').textContent = `${nf(prixElectricite(), 4)} €/kWh`;
+  });
+}
+
+$('#part-domicile').addEventListener('input', (e) => {
+  config.tarif.partDomicile = Number(e.target.value);
+  enregistrer();
+  $('#part-valeur').textContent = `${config.tarif.partDomicile} %`;
+  $('#tarif-effectif').textContent = `${nf(prixElectricite(), 4)} €/kWh`;
+});
 
 $('#opt-wakelock').addEventListener('change', (e) => {
   config.wakelock = e.target.checked;

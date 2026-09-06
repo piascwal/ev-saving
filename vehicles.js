@@ -52,6 +52,22 @@ export const PRIX_DEFAUT = {
   electricite: 0.1740, // €/kWh tarif base domestique
 };
 
+// Raccourcis de tarifs électriques courants (France) — indicatifs et modifiables
+export const TARIFS_ELEC = {
+  domicile: [
+    { nom: 'Base', prix: 0.1740 },
+    { nom: 'Heures creuses', prix: 0.1470 },
+    { nom: 'Tempo bleu HC', prix: 0.1296 },
+    { nom: 'Solaire / gratuit', prix: 0 },
+  ],
+  public: [
+    { nom: 'Superchargeur', prix: 0.39 },
+    { nom: 'Superchargeur abonné', prix: 0.32 },
+    { nom: 'Borne AC publique', prix: 0.30 },
+    { nom: 'Ionity', prix: 0.59 },
+  ],
+};
+
 export const CARBURANTS = {
   essence: 'Essence (SP95-E10)',
   diesel: 'Diesel (gazole)',

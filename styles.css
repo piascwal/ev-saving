@@ -179,3 +179,29 @@ summary { cursor: pointer; color: var(--accent); padding: 6px 0 12px; }
 @media (min-width: 720px) {
   .cumul-lignes b { font-size: 24px; }
 }
+
+.raccourcis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -6px 0 16px;
+}
+.puce {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--carte-bord);
+  background: #0f141a;
+  color: var(--texte-doux);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.puce.actif { border-color: var(--vert); color: var(--vert); }
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--vert);
+  height: 34px;
+}
+
+#tarif-effectif { color: var(--vert); }
