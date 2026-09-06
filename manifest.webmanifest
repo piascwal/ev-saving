@@ -1,0 +1,15 @@
+{
+  "name": "EV Saving — compteur d'économies",
+  "short_name": "EV Saving",
+  "description": "Compteur GPS de l'argent économisé grâce à un véhicule électrique.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b0e12",
+  "theme_color": "#0b0e12",
+  "lang": "fr",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
