@@ -758,6 +758,11 @@ $('#btn-demarrer').addEventListener('click', () => {
 
 $('#btn-reinit').addEventListener('click', () => {
   const b = bilan(trajet.distanceM);
+  const message = b.km > 0.05
+    ? `Terminer ce trajet ? ${nfEuro.format(b.economie)} sur ${nf(b.km, 1)} km seront ajoutés au cumul, puis le compteur repartira de zéro.`
+    : 'Remettre le compteur de trajet à zéro ?';
+  if (!confirm(message)) return;
+
   if (b.km > 0.05) {
     cumul.euros += b.economie;
     cumul.km += b.km;

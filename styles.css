@@ -23,17 +23,24 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-.topbar {
+/* Bandeau de rappel + barre de titre : collés en haut de l'écran, visibles
+   sur les deux onglets et en toute circonstance, y compris au défilement. */
+.entete-fixe {
   position: sticky;
   top: 0;
   z-index: 10;
+  margin: 0 -16px;
+  padding: 0 16px;
+  background: var(--fond);
+  border-bottom: 1px solid var(--carte-bord);
+}
+
+.topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 14px 0 10px;
-  background: var(--fond);
-  border-bottom: 1px solid var(--carte-bord);
 }
 .brand { font-weight: 700; letter-spacing: .2px; }
 .bolt { color: var(--vert); }
@@ -296,13 +303,12 @@ input[type="range"] {
 .cgu-actions .btn:disabled { opacity: .4; cursor: not-allowed; }
 
 .rappel {
-  margin: 0 0 12px;
-  padding: 10px 14px;
-  border-radius: 12px;
+  margin: 0;
+  padding: 8px 14px;
   background: #2a1c0a;
-  border: 1px solid #6b4a12;
+  border-bottom: 1px solid #6b4a12;
   color: #f0cf9a;
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
 }
 

@@ -101,13 +101,18 @@
   </div>
 </div>
 
-<header class="topbar">
-  <div class="brand"><span class="bolt">⚡</span> EV Saving</div>
-  <nav class="tabs">
-    <button class="tab is-active" data-vue="compteur">Compteur</button>
-    <button class="tab" data-vue="reglages">Réglages</button>
-  </nav>
-</header>
+<div class="entete-fixe">
+  <p class="rappel">Ne manipulez pas cette application en conduisant :
+    passager, ou véhicule à l'arrêt.</p>
+
+  <header class="topbar">
+    <div class="brand"><span class="bolt">⚡</span> EV Saving</div>
+    <nav class="tabs">
+      <button class="tab is-active" data-vue="compteur">Compteur</button>
+      <button class="tab" data-vue="reglages">Réglages</button>
+    </nav>
+  </header>
+</div>
 
 <!-- ------------------------------ COMPTEUR ------------------------------ -->
 <main id="vue-compteur" class="vue">
@@ -162,9 +167,6 @@
     <div class="ligne"><span>Véhicule électrique</span><b id="resume-ev">—</b></div>
     <div class="ligne"><span>Prix retenus</span><b id="resume-prix">—</b></div>
   </section>
-
-  <p class="rappel">Ne manipulez pas cette application en conduisant :
-    passager, ou véhicule à l'arrêt.</p>
 
   <div class="actions">
     <button id="btn-demarrer" class="btn btn-primaire">Démarrer le trajet</button>
