@@ -339,16 +339,6 @@ function lisser(point) {
   };
 }
 
-// Bandeau d'explication tant que la position reste inexploitable.
-function majPrecision(precision) {
-  const bloc = $('#bloc-precision');
-  bloc.hidden = precision <= PRECISION_MAX;
-  $('#precision-annoncee').textContent = `±${Math.round(precision)} m`;
-  $('#precision-meilleure').textContent = Number.isFinite(diag.meilleurePrecision)
-    ? `±${Math.round(diag.meilleurePrecision)} m`
-    : '—';
-}
-
 function qualiteSignal(precision) {
   if (precision <= 12) return 'bon';
   if (precision <= 30) return 'moyen';
@@ -439,7 +429,6 @@ function surPosition(pos, source = 'watchPosition') {
   if (brut.precision > PRECISION_MAX) {
     diag.rejets += 1;
     diag.dernierFiltre = `précision ±${Math.round(brut.precision)} m`;
-    majPrecision(brut.precision);
     etat(
       brut.precision > PRECISION_RESEAU
         ? `Position réseau (±${Math.round(brut.precision)} m) — le GPS n'est pas encore accroché`
@@ -449,7 +438,6 @@ function surPosition(pos, source = 'watchPosition') {
     majDiagnostic(pos);
     return;
   }
-  majPrecision(brut.precision);
 
   const point = lisser(brut);
   diag.precisionBrute = brut.precision;

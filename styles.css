@@ -306,10 +306,3 @@ input[type="range"] {
   text-align: center;
 }
 
-/* Alerte de précision insuffisante : position réseau au lieu du GPS */
-.alerte-carte { border-color: #6b4a12; background: #211809; }
-.alerte-carte h2 { color: #f0cf9a; }
-.alerte-carte p { font-size: 15px; margin: 0 0 10px; }
-.pistes { margin: 0 0 10px; padding-left: 20px; color: var(--texte-doux); font-size: 14px; }
-.pistes li { margin-bottom: 7px; }
-.pistes b { color: var(--texte); }

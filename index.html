@@ -128,28 +128,6 @@
     <p id="gps-erreur" class="erreur" hidden></p>
   </section>
 
-  <section id="bloc-precision" class="carte alerte-carte" hidden>
-    <h2>Position approximative, pas du GPS</h2>
-    <p>Le navigateur renvoie une position à <b id="precision-annoncee">±— m</b>,
-      déduite des antennes ou du Wi-Fi et non du récepteur GPS. À cette
-      précision, aucune distance ne peut être mesurée : les points sont écartés
-      pour ne pas fabriquer des kilomètres qui n'existent pas.</p>
-    <p class="aide">Pour obtenir une vraie position GPS :</p>
-    <ul class="pistes">
-      <li><b>Android</b> — Paramètres → Applications → votre navigateur →
-        Autorisations → Position : activez <b>« Utiliser la position précise »</b>.</li>
-      <li><b>Android</b> — Paramètres → Localisation → activez la
-        <b>précision de la localisation</b> (mode haute précision).</li>
-      <li><b>iOS</b> — Réglages → Confidentialité → Service de localisation →
-        votre navigateur → activez <b>« Position exacte »</b>.</li>
-      <li>Placez-vous <b>à ciel dégagé</b> et laissez <b>30 à 60 s</b> au
-        récepteur pour accrocher les satellites : un premier point est souvent
-        approximatif avant de s'affiner.</li>
-    </ul>
-    <p class="aide">Meilleure précision obtenue depuis le démarrage :
-      <b id="precision-meilleure">—</b>.</p>
-  </section>
-
   <section class="carte compteur">
     <div class="etiquette">Économisé sur ce trajet</div>
     <div id="economie" class="chiffre-geant">0,00 €</div>

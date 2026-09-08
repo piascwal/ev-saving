@@ -122,8 +122,7 @@ Les positions sont lissées par un filtre de Kalman à une dimension dont la
 variance de mesure est la précision annoncée : sans cela, l'oscillation du
 récepteur à l'arrêt est comptée comme de la distance parcourue. Une position
 annoncée à plus de 500 m près ne vient pas du GPS mais des antennes ou du
-Wi-Fi ; l'application l'écarte et affiche la marche à suivre pour activer la
-localisation précise.
+Wi-Fi ; l'application l'écarte et le signale dans la ligne d'état.
 
 Les points dont la précision dépasse 200 m sont ignorés, ainsi que les sauts de
 position au-delà de 250 km/h. En dessous, le seuil de bruit vaut la moitié de la
