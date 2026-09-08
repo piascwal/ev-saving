@@ -235,3 +235,81 @@ input[type="range"] {
   color: var(--texte-doux);
   opacity: .55;
 }
+
+
+/* ---- Conditions d'utilisation : voile bloquant au premier lancement ---- */
+.voile {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(4, 6, 9, .93);
+  overflow: auto;
+}
+.voile[hidden] { display: none; }
+
+.cgu-boite {
+  width: min(560px, 100%);
+  max-height: min(92vh, 900px);
+  display: flex;
+  flex-direction: column;
+  background: var(--carte);
+  border: 1px solid var(--carte-bord);
+  border-radius: var(--rayon);
+  padding: 20px;
+}
+.cgu-boite h1 { font-size: 20px; margin: 0 0 12px; }
+
+.cgu-alerte {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #40140f;
+  border: 1px solid #8c2b1f;
+  color: #ffc9c0;
+  font-weight: 650;
+}
+
+.cgu-texte {
+  flex: 1;
+  min-height: 120px;
+  overflow-y: auto;
+  padding-right: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--texte-doux);
+  border-top: 1px solid var(--carte-bord);
+  border-bottom: 1px solid var(--carte-bord);
+}
+.cgu-texte h2 { font-size: 14px; color: var(--texte); margin: 14px 0 4px; }
+.cgu-texte h2:first-child { margin-top: 10px; }
+.cgu-texte p { margin: 0 0 8px; }
+.cgu-texte b { color: var(--texte); }
+.cgu-resume { color: var(--texte); font-weight: 600; margin: 14px 0 10px; }
+
+.cgu-engagement { align-items: flex-start; padding: 14px 0 4px; font-size: 14px; }
+.cgu-engagement input { margin-top: 2px; flex: none; }
+.cgu-actions { display: flex; gap: 12px; }
+.cgu-actions .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.rappel {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #2a1c0a;
+  border: 1px solid #6b4a12;
+  color: #f0cf9a;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Alerte de précision insuffisante : position réseau au lieu du GPS */
+.alerte-carte { border-color: #6b4a12; background: #211809; }
+.alerte-carte h2 { color: #f0cf9a; }
+.alerte-carte p { font-size: 15px; margin: 0 0 10px; }
+.pistes { margin: 0 0 10px; padding-left: 20px; color: var(--texte-doux); font-size: 14px; }
+.pistes li { margin-bottom: 7px; }
+.pistes b { color: var(--texte); }

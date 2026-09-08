@@ -1,5 +1,5 @@
 // Cache applicatif : l'app reste utilisable sans réseau (tunnels, zones blanches).
-const CACHE = 'ev-saving-v8';
+const CACHE = 'ev-saving-v9';
 const FICHIERS = [
   './',
   './index.html',

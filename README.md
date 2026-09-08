@@ -1,5 +1,15 @@
 # EV Saving — compteur d'économies
 
+> **Avertissement — à lire avant tout usage.** Application de divertissement,
+> fournie sans aucune garantie. **Elle ne doit en aucun cas être utilisée par le
+> conducteur d'un véhicule en circulation.** Toute manipulation se fait véhicule
+> à l'arrêt et moteur coupé, ou par un passager. L'utilisateur reste seul
+> responsable du respect du code de la route ; l'éditeur décline toute
+> responsabilité en cas d'accident, d'infraction ou de dommage. Les chiffres
+> affichés sont des ordres de grandeur indicatifs, sans valeur de mesure ni de
+> conseil. Voir [CONDITIONS.md](CONDITIONS.md) — leur acceptation est demandée
+> au premier lancement.
+
 Application web (PWA) qui compte **en direct l'argent économisé** en roulant en
 électrique, plutôt qu'avec un véhicule thermique de référence. La distance est
 mesurée par le **GPS de l'appareil**, ce qui la rend utilisable telle quelle
@@ -97,7 +107,23 @@ Pour l'usage en voiture, publiez le dossier sur n'importe quel hébergement
 statique en HTTPS (GitHub Pages, Netlify, Cloudflare Pages…) et ouvrez l'URL
 dans le navigateur du véhicule.
 
+## Conditions d'utilisation
+
+Les conditions complètes figurent dans [CONDITIONS.md](CONDITIONS.md) et sont
+présentées dans l'application au premier lancement : leur acceptation explicite,
+avec engagement de ne pas utiliser l'application en conduisant, est nécessaire
+avant toute demande de position. Elles restent consultables à tout moment depuis
+l'onglet *Réglages*. Le code est publié sous licence MIT, sans garantie
+(voir [LICENSE](LICENSE)).
+
 ## Précision
+
+Les positions sont lissées par un filtre de Kalman à une dimension dont la
+variance de mesure est la précision annoncée : sans cela, l'oscillation du
+récepteur à l'arrêt est comptée comme de la distance parcourue. Une position
+annoncée à plus de 500 m près ne vient pas du GPS mais des antennes ou du
+Wi-Fi ; l'application l'écarte et affiche la marche à suivre pour activer la
+localisation précise.
 
 Les points dont la précision dépasse 200 m sont ignorés, ainsi que les sauts de
 position au-delà de 250 km/h. En dessous, le seuil de bruit vaut la moitié de la

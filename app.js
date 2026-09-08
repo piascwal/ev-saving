@@ -9,6 +9,56 @@ const CLE_CUMUL  = 'ev-saving:cumul:v1';
 
 const $ = (sel) => document.querySelector(sel);
 
+/* ------------------- conditions d'utilisation --------------------- */
+
+const CLE_CGU = 'ev-saving:cgu:v1';
+
+// Le voile est affiché par défaut dans le HTML : si le script échoue, les
+// conditions restent visibles plutôt que d'être silencieusement contournées.
+function cguAcceptees() {
+  try {
+    return JSON.parse(localStorage.getItem(CLE_CGU) || 'null')?.accepte === true;
+  } catch {
+    return false;
+  }
+}
+
+function fermerCgu() {
+  document.getElementById('cgu').hidden = true;
+  document.body.style.overflow = '';
+}
+
+function ouvrirCgu(consultation) {
+  const voile = document.getElementById('cgu');
+  voile.hidden = false;
+  document.body.style.overflow = 'hidden';
+  voile.querySelector('.cgu-texte').scrollTop = 0;
+  document.getElementById('cgu-accepter').hidden = consultation;
+  document.getElementById('cgu-engagement-bloc').hidden = consultation;
+  document.getElementById('cgu-fermer').hidden = !consultation;
+}
+
+document.getElementById('cgu-case').addEventListener('change', (e) => {
+  document.getElementById('cgu-accepter').disabled = !e.target.checked;
+});
+
+document.getElementById('cgu-accepter').addEventListener('click', () => {
+  try {
+    localStorage.setItem(CLE_CGU, JSON.stringify({
+      accepte: true,
+      version: 1,
+      date: new Date().toISOString(),
+    }));
+  } catch { /* stockage indisponible : les conditions seront redemandées */ }
+  fermerCgu();
+  initAutorisation();
+});
+
+document.getElementById('cgu-fermer').addEventListener('click', fermerCgu);
+document.getElementById('btn-revoir-cgu').addEventListener('click', () => ouvrirCgu(true));
+
+if (cguAcceptees()) fermerCgu();
+
 /* ------------------------------ état ------------------------------ */
 
 const configDefaut = () => ({
@@ -231,6 +281,7 @@ function toutAfficher() {
 
 const RAYON_TERRE = 6371000;   // m
 const PRECISION_MAX = 200;     // m : au-delà, la position n'est pas exploitable
+const PRECISION_RESEAU = 500;  // m : au-delà, la position vient du réseau, pas du GPS
 const PRECISION_BRUIT_MAX = 30; // m : plafond du seuil de bruit, une précision
                                 // annoncée pessimiste ne doit pas figer la distance
 const SANS_SIGNAL_MS = 15000;  // au-delà, on prévient qu'aucun point n'arrive
@@ -244,12 +295,65 @@ const diag = {
   rejets: 0,
   sauts: 0,           // rejets « saut de position » consécutifs
   intervalle: '—',
+  precisionBrute: 0,
+  precisionLissee: 0,
+  meilleurePrecision: Infinity,
   horodatage: '—',
   derniereErreur: 'aucune',
   derniereReception: 0,
   dernierFiltre: '—',
   source: '—',
 };
+
+// Filtre de Kalman à une dimension appliqué à la position, la précision
+// annoncée servant de variance de mesure. Le GPS d'un véhicule oscille de
+// plusieurs mètres d'une seconde à l'autre : sans lissage, cette dérive est
+// comptée comme de la distance parcourue, et la vitesse calculée saute.
+const BRUIT_MANOEUVRE = 5; // m/s : marge d'évolution laissée au véhicule
+let filtre = null;
+
+function reinitialiserFiltre() {
+  filtre = null;
+}
+
+function lisser(point) {
+  const varianceMesure = Math.max(point.precision, 1) ** 2;
+  if (!filtre) {
+    filtre = { lat: point.lat, lon: point.lon, variance: varianceMesure, t: point.t };
+  } else {
+    const dt = (point.t - filtre.t) / 1000;
+    if (dt > 0) {
+      filtre.variance += dt * BRUIT_MANOEUVRE ** 2;
+      filtre.t = point.t;
+    }
+    const gain = filtre.variance / (filtre.variance + varianceMesure);
+    filtre.lat += gain * (point.lat - filtre.lat);
+    filtre.lon += gain * (point.lon - filtre.lon);
+    filtre.variance *= 1 - gain;
+  }
+  return {
+    lat: filtre.lat,
+    lon: filtre.lon,
+    t: point.t,
+    precision: Math.sqrt(filtre.variance),
+  };
+}
+
+// Bandeau d'explication tant que la position reste inexploitable.
+function majPrecision(precision) {
+  const bloc = $('#bloc-precision');
+  bloc.hidden = precision <= PRECISION_MAX;
+  $('#precision-annoncee').textContent = `±${Math.round(precision)} m`;
+  $('#precision-meilleure').textContent = Number.isFinite(diag.meilleurePrecision)
+    ? `±${Math.round(diag.meilleurePrecision)} m`
+    : '—';
+}
+
+function qualiteSignal(precision) {
+  if (precision <= 12) return 'bon';
+  if (precision <= 30) return 'moyen';
+  return 'faible';
+}
 
 function distanceEntre(a, b) {
   const rad = Math.PI / 180;
@@ -278,7 +382,9 @@ function majDiagnostic(pos) {
   if (pos) {
     const c = pos.coords;
     $('#diag-pos').textContent = `${c.latitude.toFixed(5)}, ${c.longitude.toFixed(5)}`;
-    $('#diag-precision').textContent = `±${Math.round(c.accuracy ?? 0)} m`;
+    $('#diag-precision').textContent = diag.precisionLissee
+      ? `±${Math.round(diag.precisionBrute)} m brut · ±${Math.round(diag.precisionLissee)} m lissé`
+      : `±${Math.round(c.accuracy ?? 0)} m`;
     $('#diag-vitesse').textContent = Number.isFinite(c.speed) && c.speed !== null
       ? `${(c.speed * 3.6).toFixed(0)} km/h`
       : 'non fournie';
@@ -318,21 +424,36 @@ function surPosition(pos, source = 'watchPosition') {
     ? (ecartHorodatage < 60000 ? 'cohérent' : `décalé de ${Math.round(ecartHorodatage / 1000)} s`)
     : 'absent';
 
-  const point = {
+  const brut = {
     lat: pos.coords.latitude,
     lon: pos.coords.longitude,
     t: maintenant,
     precision: pos.coords.accuracy ?? PRECISION_MAX,
   };
 
-  // Les positions trop imprécises feraient gonfler la distance à l'arrêt.
-  if (point.precision > PRECISION_MAX) {
+  diag.meilleurePrecision = Math.min(diag.meilleurePrecision, brut.precision);
+
+  // Une position à plusieurs centaines de mètres près ne vient pas du récepteur
+  // GPS mais des antennes ou du Wi-Fi : la compter fabriquerait des kilomètres
+  // imaginaires. On l'écarte, et on explique comment obtenir mieux.
+  if (brut.precision > PRECISION_MAX) {
     diag.rejets += 1;
-    diag.dernierFiltre = `précision ±${Math.round(point.precision)} m`;
-    etat(`Signal GPS trop imprécis (±${Math.round(point.precision)} m)`);
+    diag.dernierFiltre = `précision ±${Math.round(brut.precision)} m`;
+    majPrecision(brut.precision);
+    etat(
+      brut.precision > PRECISION_RESEAU
+        ? `Position réseau (±${Math.round(brut.precision)} m) — le GPS n'est pas encore accroché`
+        : `Signal GPS trop imprécis (±${Math.round(brut.precision)} m)`,
+      true,
+    );
     majDiagnostic(pos);
     return;
   }
+  majPrecision(brut.precision);
+
+  const point = lisser(brut);
+  diag.precisionBrute = brut.precision;
+  diag.precisionLissee = point.precision;
 
   const vitesseMesuree = pos.coords.speed; // m/s, généralement fournie en voiture
   const vitesseFiable = Number.isFinite(vitesseMesuree) && vitesseMesuree !== null;
@@ -345,7 +466,7 @@ function surPosition(pos, source = 'watchPosition') {
 
     // Le seuil de bruit est plafonné : certains récepteurs annoncent une
     // précision très pessimiste tout en suivant correctement la route.
-    const seuil = Math.max(6, Math.min(point.precision, PRECISION_BRUIT_MAX) * 0.5);
+    const seuil = Math.max(4, Math.min(point.precision, PRECISION_BRUIT_MAX) * 0.5);
     const aberrant = dt > 0 && vitesseCalculee > 70; // > 250 km/h : saut de position
 
     diag.intervalle = `${dt.toFixed(1)} s`;
@@ -393,7 +514,9 @@ function surPosition(pos, source = 'watchPosition') {
     dernierPoint = point;
   }
 
-  if (enCours()) etat(`GPS actif — précision ±${Math.round(point.precision)} m`);
+  if (enCours()) {
+    etat(`GPS actif — précision ±${Math.round(brut.precision)} m (signal ${qualiteSignal(brut.precision)})`);
+  }
   else etat('GPS prêt — appuyez sur « Démarrer le trajet »');
   majCompteur();
 }
@@ -420,7 +543,8 @@ function surErreurGps(err) {
   // Les codes 2 et 3 sont transitoires : watchPosition continue de tenter.
 }
 
-const OPTIONS_GPS = { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 };
+// maximumAge à 0 : une position en cache fausse la distance et la vitesse.
+const OPTIONS_GPS = { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 };
 
 let sondageId = null;      // secours si watchPosition ne délivre rien
 let batteur = null;        // rafraîchit l'affichage même sans nouveau point
@@ -470,6 +594,8 @@ function demarrerSuivi() {
   if (!verifierContexte()) return;
 
   dernierPoint = null;
+  reinitialiserFiltre();
+  diag.meilleurePrecision = Infinity;
   diag.derniereReception = 0;
   diag.pointsSuivi = 0;
   diag.dernierFiltre = '—';
@@ -503,6 +629,7 @@ function arreterSuivi() {
     veilleId = null;
   }
   arreterSondage();
+  reinitialiserFiltre();
   if (batteur !== null) clearInterval(batteur);
   batteur = null;
   dernierPoint = null;
@@ -884,7 +1011,8 @@ remplirSelects();
 majReglages();
 toutAfficher();
 etat('GPS inactif');
-initAutorisation();
+// Aucune demande de position tant que les conditions ne sont pas acceptées.
+if (cguAcceptees()) initAutorisation();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

@@ -11,6 +11,96 @@
 </head>
 <body>
 
+<div id="cgu" class="voile">
+  <div class="cgu-boite" role="dialog" aria-modal="true" aria-labelledby="cgu-titre">
+    <h1 id="cgu-titre">Avant de commencer</h1>
+
+    <p class="cgu-alerte">
+      N'utilisez jamais cette application en conduisant.
+    </p>
+
+    <div class="cgu-texte" tabindex="0">
+      <h2>1. Ce qu'est cette application</h2>
+      <p>Un projet personnel, gratuit et sans but commercial, proposé pour la
+        curiosité et le divertissement. Il estime un ordre de grandeur de
+        l'écart de coût entre un véhicule électrique et un véhicule thermique de
+        référence. Ce n'est ni un instrument de mesure, ni un outil
+        professionnel, ni un équipement automobile. Aucune affiliation avec
+        Tesla, Inc. ni avec un constructeur ou un fournisseur d'énergie.</p>
+
+      <h2>2. Sécurité routière</h2>
+      <p><b>L'application ne doit en aucun cas être utilisée par le conducteur
+        d'un véhicule en circulation.</b> Ne la consultez pas, ne la démarrez
+        pas, ne la réglez pas en conduisant, ni à l'arrêt dans la circulation.
+        Toute manipulation se fait véhicule stationné et moteur coupé, ou par un
+        passager. L'écran ne doit pas se trouver dans le champ de vision du
+        conducteur.</p>
+      <p>Vous restez seul responsable du respect du code de la route et de la
+        réglementation applicable, notamment des règles de maîtrise du véhicule
+        et d'usage des écrans au volant (en France, articles R412-6 et
+        R412-6-1). La conduite exige une attention exclusive et permanente :
+        aucune information affichée ici ne justifie de détourner le regard de la
+        route. L'application mesure en arrière-plan — consultez les chiffres une
+        fois arrivé.</p>
+
+      <h2>3. Aucune garantie</h2>
+      <p>Application fournie « en l'état », sans garantie d'exactitude, de
+        continuité ni d'absence d'erreur. Les distances GPS sont approximatives
+        et peuvent différer du compteur du véhicule. Les consommations, prix et
+        facteurs de CO₂ proposés par défaut sont des ordres de grandeur
+        indicatifs, potentiellement faux ou périmés. Les montants affichés ne
+        constituent ni une comptabilité, ni un justificatif, ni un conseil
+        d'achat, financier, fiscal ou énergétique.</p>
+
+      <h2>4. Responsabilité</h2>
+      <p>Dans toute la mesure permise par la loi, l'éditeur ne pourra être tenu
+        responsable d'aucun dommage, direct ou indirect, résultant de
+        l'utilisation ou de l'impossibilité d'utiliser l'application, notamment
+        de tout accident, blessure ou dommage matériel survenu pendant la
+        conduite, de toute infraction ou sanction, de toute perte financière ou
+        décision prise sur la foi des chiffres affichés. <b>L'utilisation se
+        fait sous votre seule responsabilité, à vos risques et périls.</b></p>
+      <p>Certaines législations n'autorisent pas l'exclusion de certaines
+        garanties ou responsabilités, notamment en cas de dommage corporel
+        résultant d'une faute de l'éditeur : les limitations ci-dessus ne
+        s'appliquent que dans la limite permise par la loi.</p>
+
+      <h2>5. Données personnelles</h2>
+      <p>Tout fonctionne sur votre appareil. La position sert à calculer une
+        distance en mémoire, puis n'est ni enregistrée, ni transmise, ni
+        partagée : aucun serveur, aucun compte, aucune télémétrie, aucun
+        traceur. Réglages et totaux restent dans le stockage local du
+        navigateur et disparaissent si vous effacez les données du site.
+        L'autorisation de localisation est révocable à tout moment.</p>
+
+      <h2>6. Public visé</h2>
+      <p>Application non destinée aux personnes de moins de 15 ans, et
+        s'adressant à un public conscient de ses obligations en matière de
+        sécurité routière.</p>
+
+      <h2>7. Évolutions et droit applicable</h2>
+      <p>L'éditeur peut modifier, suspendre ou interrompre l'application et ces
+        conditions à tout moment, sans préavis. Conditions régies par le droit
+        français ; à défaut d'accord amiable, compétence des tribunaux français.</p>
+
+      <p class="cgu-resume">En résumé : c'est un petit jeu. Ne l'utilisez pas en
+        conduisant. Respectez le code de la route. Les chiffres sont indicatifs.
+        Vous êtes seul responsable.</p>
+    </div>
+
+    <label class="bascule cgu-engagement" id="cgu-engagement-bloc">
+      <input type="checkbox" id="cgu-case">
+      <span>J'ai lu et j'accepte ces conditions. Je m'engage à ne pas utiliser
+        cette application en conduisant.</span>
+    </label>
+
+    <div class="cgu-actions">
+      <button id="cgu-accepter" class="btn btn-primaire" disabled>Accepter et continuer</button>
+      <button id="cgu-fermer" class="btn btn-secondaire" hidden>Fermer</button>
+    </div>
+  </div>
+</div>
+
 <header class="topbar">
   <div class="brand"><span class="bolt">⚡</span> EV Saving</div>
   <nav class="tabs">
@@ -36,6 +126,28 @@
     </p>
     <button id="btn-autoriser" class="btn btn-primaire">Autoriser le GPS</button>
     <p id="gps-erreur" class="erreur" hidden></p>
+  </section>
+
+  <section id="bloc-precision" class="carte alerte-carte" hidden>
+    <h2>Position approximative, pas du GPS</h2>
+    <p>Le navigateur renvoie une position à <b id="precision-annoncee">±— m</b>,
+      déduite des antennes ou du Wi-Fi et non du récepteur GPS. À cette
+      précision, aucune distance ne peut être mesurée : les points sont écartés
+      pour ne pas fabriquer des kilomètres qui n'existent pas.</p>
+    <p class="aide">Pour obtenir une vraie position GPS :</p>
+    <ul class="pistes">
+      <li><b>Android</b> — Paramètres → Applications → votre navigateur →
+        Autorisations → Position : activez <b>« Utiliser la position précise »</b>.</li>
+      <li><b>Android</b> — Paramètres → Localisation → activez la
+        <b>précision de la localisation</b> (mode haute précision).</li>
+      <li><b>iOS</b> — Réglages → Confidentialité → Service de localisation →
+        votre navigateur → activez <b>« Position exacte »</b>.</li>
+      <li>Placez-vous <b>à ciel dégagé</b> et laissez <b>30 à 60 s</b> au
+        récepteur pour accrocher les satellites : un premier point est souvent
+        approximatif avant de s'affiner.</li>
+    </ul>
+    <p class="aide">Meilleure précision obtenue depuis le démarrage :
+      <b id="precision-meilleure">—</b>.</p>
   </section>
 
   <section class="carte compteur">
@@ -72,6 +184,9 @@
     <div class="ligne"><span>Véhicule électrique</span><b id="resume-ev">—</b></div>
     <div class="ligne"><span>Prix retenus</span><b id="resume-prix">—</b></div>
   </section>
+
+  <p class="rappel">Ne manipulez pas cette application en conduisant :
+    passager, ou véhicule à l'arrêt.</p>
 
   <div class="actions">
     <button id="btn-demarrer" class="btn btn-primaire">Démarrer le trajet</button>
@@ -236,6 +351,14 @@
       <span>Garder l'écran allumé pendant le trajet</span>
     </label>
     <p class="aide">Réglages enregistrés automatiquement sur cet appareil.</p>
+  </section>
+
+  <section class="carte">
+    <h2>Conditions d'utilisation</h2>
+    <p class="aide">Application de divertissement fournie sans garantie, à
+      n'utiliser en aucun cas en conduisant. L'éditeur décline toute
+      responsabilité quant à l'usage qui en est fait.</p>
+    <button id="btn-revoir-cgu" class="btn btn-secondaire">Relire les conditions</button>
   </section>
 </main>
 
