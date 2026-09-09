@@ -96,6 +96,18 @@ en usage. Les deux se changent dans les réglages.
 Tous les réglages, le trajet en cours et le cumul sont conservés dans le
 `localStorage` de l'appareil.
 
+## Mises à jour et cache
+
+`styles.css`, `app.js` et `vehicles.js` sont référencés avec un paramètre de
+version (`?v=15`) et importés ainsi entre eux. À chaque changement de l'un de
+ces trois fichiers, incrémenter ce numéro partout où il apparaît (les liens
+dans `index.html`, l'import en tête de `app.js`, `VERSION` dans `sw.js`) :
+sans cela, un appareil qui a déjà visité l'application peut charger un fichier
+à jour aux côtés d'un autre resté sur son ancienne version — deux versions
+mélangées produisant un rendu incohérent (des unités dupliquées, par exemple).
+Le nom d'URL différent force chaque fichier à être retéléchargé ensemble, quel
+que soit l'état du cache HTTP du navigateur, du CDN ou du service worker.
+
 ## Lancer en local
 
 Un serveur statique suffit — la géolocalisation et le service worker exigent
