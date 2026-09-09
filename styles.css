@@ -236,6 +236,23 @@ input[type="range"] {
   opacity: .55;
 }
 
+/* Chiffre qui vient de changer : petit mouvement façon compteur mécanique
+   (tambour qui avance d'un cran), plutôt qu'un texte qui saute sans
+   transition. Un nouvel élément est créé à chaque changement, l'animation
+   rejoue donc automatiquement sans code JS dédié au déclenchement. */
+.tourne {
+  display: inline-block;
+  animation: tourne-chiffre 260ms cubic-bezier(.22, 1, .36, 1);
+}
+@keyframes tourne-chiffre {
+  0%   { transform: translateY(-55%); opacity: .2; }
+  60%  { transform: translateY(5%); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tourne { animation: none; }
+}
+
 
 /* ---- Conditions d'utilisation : voile bloquant au premier lancement ---- */
 .voile {

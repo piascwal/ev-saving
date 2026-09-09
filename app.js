@@ -213,32 +213,60 @@ const nfEuroFin = new Intl.NumberFormat('fr-FR', {
   maximumFractionDigits: 3,
 });
 
-// Le millième d'euro n'a pas cours : il est affiché en gris, uniquement pour
-// voir le compteur avancer entre deux positions GPS.
-function euroAvecMillieme(montant) {
-  return nfEuroFin
-    .formatToParts(montant)
-    .map((part) => (part.type === 'fraction'
-      ? `${part.value.slice(0, 2)}<span class="millieme">${part.value.slice(2)}</span>`
-      : part.value))
-    .join('');
+// Formate un montant avec un millième d'euro : sans valeur monétaire, il est
+// affiché en gris (voir .millieme), uniquement pour voir le compteur avancer
+// entre deux positions GPS. Renvoie aussi l'index de ce chiffre dans le texte,
+// pour que ecrireAnime() sache lequel griser en permanence.
+function texteEuroMillieme(montant) {
+  let texte = '';
+  let indexMillieme = -1;
+  for (const part of nfEuroFin.formatToParts(montant)) {
+    texte += part.value;
+    if (part.type === 'fraction') indexMillieme = texte.length - 1;
+  }
+  return { texte, griser: indexMillieme >= 0 ? new Set([indexMillieme]) : null };
 }
 const nf = (n, d = 1) =>
   new Intl.NumberFormat('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
 
-/* -------------------------- affichage ---------------------------- */
+/* -------------------------- affichage animé ------------------------ */
+
+// Remplace le texte d'un élément chiffre par chiffre : les caractères qui
+// changent depuis le rendu précédent reçoivent un petit mouvement (voir
+// .tourne dans styles.css), façon compteur mécanique, plutôt que le texte ne
+// saute sans transition. `griser` liste les index à toujours afficher en gris
+// (le millième d'euro). Sans effet au tout premier rendu, pour ne pas faire
+// tourner l'écran entier à l'ouverture de l'application.
+function ecrireAnime(el, texte, griser = null) {
+  const avant = el.dataset.valeur;
+  el.dataset.valeur = texte;
+  if (avant === texte) return;
+  const premierRendu = avant === undefined;
+
+  let html = '';
+  for (let i = 0; i < texte.length; i++) {
+    const c = texte[i];
+    const classes = [];
+    if (griser?.has(i)) classes.push('millieme');
+    if (!premierRendu && c !== avant[i]) classes.push('tourne');
+    html += classes.length ? `<span class="${classes.join(' ')}">${c}</span>` : c;
+  }
+  el.innerHTML = html;
+}
 
 function majCompteur() {
   const b = bilan(trajet.distanceM);
-  $('#economie').innerHTML = euroAvecMillieme(b.economie);
-  $('#economie-km').textContent =
-    b.km > 0.2 ? `${nfEuro.format((b.economie / b.km) * 100)} / 100 km` : '— € / 100 km';
-  $('#co2').textContent = `${nf(Math.max(b.co2, 0), 1)} kg de CO₂ évités`;
-  $('#distance').innerHTML = `${nf(b.km, b.km < 10 ? 2 : 1)}<small> km</small>`;
-  $('#vitesse').innerHTML = `${nf(trajet.vitesse || 0, 0)}<small> km/h</small>`;
-  $('#cout-ev').innerHTML = `${nf(b.coutEv, 2)}<small> €</small>`;
-  $('#cout-th').innerHTML = `${nf(b.coutTh, 2)}<small> €</small>`;
+  const { texte: texteEconomie, griser } = texteEuroMillieme(b.economie);
+  ecrireAnime($('#economie'), texteEconomie, griser);
+  ecrireAnime($('#economie-km'),
+    b.km > 0.2 ? `${nfEuro.format((b.economie / b.km) * 100)} / 100 km` : '— € / 100 km');
+  ecrireAnime($('#co2'), `${nf(Math.max(b.co2, 0), 1)} kg de CO₂ évités`);
+  ecrireAnime($('#distance'), nf(b.km, b.km < 10 ? 2 : 1));
+  ecrireAnime($('#vitesse'), nf(trajet.vitesse || 0, 0));
+  ecrireAnime($('#cout-ev'), nf(b.coutEv, 2));
+  ecrireAnime($('#cout-th'), nf(b.coutTh, 2));
   $('#economie').classList.toggle('negatif', b.economie < 0);
+  majCumul(b);
 }
 
 function majResume() {
@@ -253,10 +281,17 @@ function majResume() {
     `${nf(prixCarburant(), 3)} €/L · ${nf(prixElectricite(), 3)} €/kWh`;
 }
 
-function majCumul() {
-  $('#cumul-euros').textContent = nfEuro.format(cumul.euros);
-  $('#cumul-km').textContent = `${nf(cumul.km, 0)} km`;
-  $('#cumul-co2').textContent = `${nf(Math.max(cumul.co2, 0), 0)} kg`;
+// Le cumul affiché inclut le trajet en cours, pas seulement les trajets déjà
+// clôturés : sans cela, cette carte restait figée entre deux appuis sur
+// « Réinitialiser » pendant que le compteur du trajet, lui, avançait.
+function majCumul(b = bilan(trajet.distanceM)) {
+  const euros = cumul.euros + b.economie;
+  const km = cumul.km + b.km;
+  const co2 = Math.max(cumul.co2 + b.co2, 0);
+  const { texte: texteEuros, griser } = texteEuroMillieme(euros);
+  ecrireAnime($('#cumul-euros'), texteEuros, griser);
+  ecrireAnime($('#cumul-km'), `${nf(km, km < 10 ? 2 : 1)} km`);
+  ecrireAnime($('#cumul-co2'), `${nf(co2, 1)} kg`);
 }
 
 function majBoutons() {
@@ -272,8 +307,7 @@ function etat(texte, erreur = false) {
 
 function toutAfficher() {
   majResume();
-  majCompteur();
-  majCumul();
+  majCompteur(); // met aussi à jour le cumul
   majBoutons();
 }
 
@@ -772,8 +806,7 @@ $('#btn-reinit').addEventListener('click', () => {
   trajet = { distanceM: 0, vitesse: 0 };
   dernierPoint = null;
   ecrire(CLE_TRAJET, trajet);
-  majCumul();
-  majCompteur();
+  majCompteur(); // met aussi à jour le cumul
   etat(enCours() ? 'Nouveau trajet en cours' : 'Trajet remis à zéro');
 });
 

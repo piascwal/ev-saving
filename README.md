@@ -37,8 +37,11 @@ le véhicule.
 3. Le compteur affiche l'économie du trajet, le coût électrique, le coût
    thermique équivalent, la vitesse et le CO₂ évité. Le troisième chiffre après
    la virgule est grisé : il n'a pas cours monétaire et sert seulement à voir le
-   compteur avancer entre deux positions.
-4. « Réinitialiser » clôt le trajet et l'ajoute au cumul de tous les trajets.
+   compteur avancer entre deux positions. Chaque chiffre qui change s'anime
+   d'un léger mouvement, façon compteur mécanique.
+4. « Réinitialiser » clôt le trajet et l'ajoute au cumul de tous les trajets. La
+   carte « Depuis le début » inclut déjà le trajet en cours avant même ce clic :
+   elle avance en direct, comme le compteur du trajet.
 
 En cas de problème, le panneau **Diagnostic GPS** en bas du compteur indique si
 la page est sécurisée, si l'API est disponible, l'état de l'autorisation, le
