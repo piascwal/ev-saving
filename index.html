@@ -7,7 +7,7 @@
 <title>EV Saving — compteur d'économies</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="styles.css?v=15">
+<link rel="stylesheet" href="styles.css?v=16">
 </head>
 <body>
 
@@ -141,19 +141,19 @@
   <section class="grille-stats">
     <div class="carte stat">
       <div class="etiquette">Distance</div>
-      <div class="chiffre"><span id="distance">0,0</span><small> km</small></div>
+      <div id="distance" class="chiffre">0,0<small> km</small></div>
     </div>
     <div class="carte stat">
       <div class="etiquette">Vitesse</div>
-      <div class="chiffre"><span id="vitesse">0</span><small> km/h</small></div>
+      <div id="vitesse" class="chiffre">0<small> km/h</small></div>
     </div>
     <div class="carte stat">
       <div class="etiquette">Coût électrique</div>
-      <div class="chiffre vert"><span id="cout-ev">0,00</span><small> €</small></div>
+      <div id="cout-ev" class="chiffre vert">0,00<small> €</small></div>
     </div>
     <div class="carte stat">
       <div class="etiquette" id="etiquette-thermique">Coût thermique</div>
-      <div class="chiffre rouge"><span id="cout-th">0,00</span><small> €</small></div>
+      <div id="cout-th" class="chiffre rouge">0,00<small> €</small></div>
     </div>
   </section>
 
@@ -340,6 +340,6 @@
 <p class="rappel">Ne manipulez pas cette application en conduisant :
   passager, ou véhicule à l'arrêt.</p>
 
-<script type="module" src="app.js?v=15"></script>
+<script type="module" src="app.js?v=16"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 import {
   THERMIQUES, ELECTRIQUES, PRIX_DEFAUT, PRIX_ANCIENS, TARIFS_ELEC,
   CARBURANTS, CARBURANTS_COURT, CO2,
-} from './vehicles.js?v=15';
+} from './vehicles.js?v=16';
 
 const CLE_CONFIG = 'ev-saving:config:v1';
 const CLE_TRAJET = 'ev-saving:trajet:v1';
@@ -256,15 +256,18 @@ function ecrireAnime(el, texte, griser = null) {
 
 function majCompteur() {
   const b = bilan(trajet.distanceM);
+  // Le mouvement mécanique et le millième grisé restent réservés au montant
+  // économisé sur le trajet : c'est le seul chiffre que l'œil doit suivre en
+  // continu. Le reste s'affiche normalement, sans transition.
   const { texte: texteEconomie, griser } = texteEuroMillieme(b.economie);
   ecrireAnime($('#economie'), texteEconomie, griser);
-  ecrireAnime($('#economie-km'),
-    b.km > 0.2 ? `${nfEuro.format((b.economie / b.km) * 100)} / 100 km` : '— € / 100 km');
-  ecrireAnime($('#co2'), `${nf(Math.max(b.co2, 0), 1)} kg de CO₂ évités`);
-  ecrireAnime($('#distance'), nf(b.km, b.km < 10 ? 2 : 1));
-  ecrireAnime($('#vitesse'), nf(trajet.vitesse || 0, 0));
-  ecrireAnime($('#cout-ev'), nf(b.coutEv, 2));
-  ecrireAnime($('#cout-th'), nf(b.coutTh, 2));
+  $('#economie-km').textContent =
+    b.km > 0.2 ? `${nfEuro.format((b.economie / b.km) * 100)} / 100 km` : '— € / 100 km';
+  $('#co2').textContent = `${nf(Math.max(b.co2, 0), 1)} kg de CO₂ évités`;
+  $('#distance').innerHTML = `${nf(b.km, b.km < 10 ? 2 : 1)}<small> km</small>`;
+  $('#vitesse').innerHTML = `${nf(trajet.vitesse || 0, 0)}<small> km/h</small>`;
+  $('#cout-ev').innerHTML = `${nf(b.coutEv, 2)}<small> €</small>`;
+  $('#cout-th').innerHTML = `${nf(b.coutTh, 2)}<small> €</small>`;
   $('#economie').classList.toggle('negatif', b.economie < 0);
   majCumul(b);
 }
@@ -283,15 +286,16 @@ function majResume() {
 
 // Le cumul affiché inclut le trajet en cours, pas seulement les trajets déjà
 // clôturés : sans cela, cette carte restait figée entre deux appuis sur
-// « Réinitialiser » pendant que le compteur du trajet, lui, avançait.
+// « Réinitialiser » pendant que le compteur du trajet, lui, avançait. Il
+// s'affiche normalement, sans millième grisé ni transition : cet effet reste
+// réservé au montant économisé sur le trajet en cours.
 function majCumul(b = bilan(trajet.distanceM)) {
   const euros = cumul.euros + b.economie;
   const km = cumul.km + b.km;
   const co2 = Math.max(cumul.co2 + b.co2, 0);
-  const { texte: texteEuros, griser } = texteEuroMillieme(euros);
-  ecrireAnime($('#cumul-euros'), texteEuros, griser);
-  ecrireAnime($('#cumul-km'), `${nf(km, km < 10 ? 2 : 1)} km`);
-  ecrireAnime($('#cumul-co2'), `${nf(co2, 1)} kg`);
+  $('#cumul-euros').textContent = nfEuro.format(euros);
+  $('#cumul-km').textContent = `${nf(km, 0)} km`;
+  $('#cumul-co2').textContent = `${nf(co2, 0)} kg`;
 }
 
 function majBoutons() {
