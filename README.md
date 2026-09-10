@@ -34,11 +34,20 @@ propriété personnalisée typée (`@property --progression`) et un dégradé
 conique masqué sur le contour ; sans effet dans les navigateurs qui ne
 supportent pas `@property`, la valeur s'applique alors sans transition.
 
-La carte du montant économisé porte en plus une texture métal brossé (fines
-hachures diagonales peintes directement sur la carte, donc jamais atténuées par
-son propre flou d'arrière-plan) ; les boutons ont un relief biseauté (reflet
-supérieur, ombre interne basse) et le bouton actif un halo assorti à sa
-couleur.
+L'aspect vitrifié en relief vient de trois couches empilées sur chaque carte
+et sur les boutons : un **reflet coupé net** en diagonale (deux points d'arrêt
+collés dans le dégradé — c'est cette arête franche qui fait « plaque de verre »,
+là où un dégradé fondu ne donne rien), un **grain métal brossé**, et un
+**assombrissement vers le bas** qui donne l'épaisseur. S'y ajoutent une arête
+haute éclairée et une arête basse dans l'ombre (`box-shadow` interne), plus une
+ombre portée franche qui décolle la carte du fond. La carte du montant
+économisé pousse le grain plus loin, avec des hachures plus marquées ; le
+bouton actif porte un halo assorti à sa couleur.
+
+Ces textures sont peintes dans le `background` de l'élément lui-même, jamais
+dans un pseudo-élément superposé : elles restent ainsi sous le texte et ne sont
+pas atténuées par le `backdrop-filter` de la carte, qui ne floute que ce qui
+passe derrière.
 
 ## HTTPS obligatoire
 

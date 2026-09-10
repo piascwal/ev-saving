@@ -1,7 +1,7 @@
 import {
   THERMIQUES, ELECTRIQUES, PRIX_DEFAUT, PRIX_ANCIENS, TARIFS_ELEC,
   CARBURANTS, CARBURANTS_COURT, CO2,
-} from './vehicles.js?v=18';
+} from './vehicles.js?v=19';
 
 const CLE_CONFIG = 'ev-saving:config:v1';
 const CLE_TRAJET = 'ev-saving:trajet:v1';
