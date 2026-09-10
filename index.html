@@ -7,7 +7,10 @@
 <title>EV Saving — compteur d'économies</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="styles.css?v=16">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="styles.css?v=17">
 </head>
 <body>
 
@@ -147,20 +150,55 @@
       <div class="etiquette">Vitesse</div>
       <div id="vitesse" class="chiffre">0<small> km/h</small></div>
     </div>
-    <div class="carte stat">
+    <div id="carte-cout-ev" class="carte stat carte-anneau anneau-vert">
       <div class="etiquette">Coût électrique</div>
       <div id="cout-ev" class="chiffre vert">0,00<small> €</small></div>
     </div>
-    <div class="carte stat">
+    <div id="carte-cout-th" class="carte stat carte-anneau anneau-rouge">
       <div class="etiquette" id="etiquette-thermique">Coût thermique</div>
       <div id="cout-th" class="chiffre rouge">0,00<small> €</small></div>
     </div>
   </section>
 
-  <section class="carte resume">
-    <div class="ligne"><span>Référence thermique</span><b id="resume-thermique">—</b></div>
-    <div class="ligne"><span>Véhicule électrique</span><b id="resume-ev">—</b></div>
-    <div class="ligne"><span>Prix retenus</span><b id="resume-prix">—</b></div>
+  <section class="grille-vehicules">
+    <div class="carte vehicule">
+      <div class="vehicule-tete">
+        <svg class="vehicule-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 21V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v13"/>
+          <path d="M3 21h10"/>
+          <path d="M13 10h2.5L18 12.5V17a1 1 0 0 1-1 1h-1"/>
+          <circle cx="6" cy="21" r="0"/>
+          <path d="M16 7V5.5L14.5 4"/>
+          <rect x="5" y="10" width="6" height="4" rx=".5"/>
+        </svg>
+        <span class="etiquette">Véhicule thermique</span>
+      </div>
+      <div id="resume-thermique" class="vehicule-valeur">—</div>
+    </div>
+    <div class="carte vehicule">
+      <div class="vehicule-tete">
+        <svg class="vehicule-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 21V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v13"/>
+          <path d="M5 21h10"/>
+          <path d="M19 10h-2"/>
+          <path d="M19 7v6"/>
+          <path d="M22 8v4"/>
+          <rect x="7" y="10" width="6" height="4" rx=".5"/>
+        </svg>
+        <span class="etiquette">Véhicule électrique</span>
+      </div>
+      <div id="resume-ev" class="vehicule-valeur">—</div>
+    </div>
+    <div class="carte vehicule">
+      <div class="vehicule-tete">
+        <svg class="vehicule-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 2 3 6v6c0 5 3.8 8.7 9 10 5.2-1.3 9-5 9-10V6l-9-4Z"/>
+          <path d="M9.5 12.5 11 14l3.5-3.5"/>
+        </svg>
+        <span class="etiquette">Prix retenus</span>
+      </div>
+      <div id="resume-prix" class="vehicule-valeur">—</div>
+    </div>
   </section>
 
   <div class="actions">
@@ -340,6 +378,6 @@
 <p class="rappel">Ne manipulez pas cette application en conduisant :
   passager, ou véhicule à l'arrêt.</p>
 
-<script type="module" src="app.js?v=16"></script>
+<script type="module" src="app.js?v=17"></script>
 </body>
 </html>

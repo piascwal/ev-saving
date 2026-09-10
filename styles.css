@@ -1,13 +1,15 @@
 :root {
-  --fond: #0b0e12;
-  --carte: #151a21;
-  --carte-bord: #232b36;
-  --texte: #eef2f7;
-  --texte-doux: #8e9aab;
+  --fond: #0a0d12;
+  --carte: rgba(255, 255, 255, .045);
+  --carte-bord: rgba(255, 255, 255, .09);
+  --carte-eclat: rgba(255, 255, 255, .05);
+  --texte: #f3f6fa;
+  --texte-doux: #93a0b3;
   --vert: #3ddc84;
   --rouge: #ff6b6b;
   --accent: #4da3ff;
-  --rayon: 16px;
+  --rayon: 20px;
+  --police: 'Outfit', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -15,9 +17,13 @@
 body {
   margin: 0;
   padding: 0 16px calc(32px + env(safe-area-inset-bottom));
-  background: var(--fond);
+  background:
+    radial-gradient(ellipse 900px 480px at 12% -8%, rgba(61, 220, 132, .13), transparent 60%),
+    radial-gradient(ellipse 700px 480px at 105% 4%, rgba(77, 163, 255, .11), transparent 55%),
+    var(--fond);
+  background-attachment: fixed;
   color: var(--texte);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--police);
   font-size: 17px;
   line-height: 1.45;
   -webkit-text-size-adjust: 100%;
@@ -32,24 +38,38 @@ body {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 0 10px;
-  background: var(--fond);
+  background: rgba(10, 13, 18, .82);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
   border-bottom: 1px solid var(--carte-bord);
 }
 .brand { font-weight: 700; letter-spacing: .2px; }
-.bolt { color: var(--vert); }
+.bolt { color: var(--vert); filter: drop-shadow(0 0 6px rgba(61, 220, 132, .7)); }
 
-.tabs { display: flex; gap: 6px; }
-.tab {
-  padding: 9px 16px;
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(255, 255, 255, .04);
   border: 1px solid var(--carte-bord);
+  border-radius: 999px;
+}
+.tab {
+  padding: 8px 16px;
+  border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
   color: var(--texte-doux);
   font: inherit;
   font-size: 15px;
   cursor: pointer;
+  transition: background .2s ease, color .2s ease;
 }
-.tab.is-active { background: var(--carte); color: var(--texte); border-color: var(--accent); }
+.tab.is-active {
+  background: rgba(255, 255, 255, .1);
+  color: var(--texte);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+}
 
 .vue { max-width: 780px; margin: 0 auto; }
 
@@ -57,6 +77,9 @@ body {
   background: var(--carte);
   border: 1px solid var(--carte-bord);
   border-radius: var(--rayon);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  box-shadow: 0 10px 30px -16px rgba(0, 0, 0, .6), inset 0 1px 0 var(--carte-eclat);
   padding: 18px;
   margin-bottom: 14px;
 }
@@ -64,9 +87,10 @@ body {
 
 .etiquette {
   color: var(--texte-doux);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .09em;
+  letter-spacing: 1.5px;
 }
 
 .compteur { text-align: center; padding: 26px 18px; }
@@ -77,8 +101,9 @@ body {
   color: var(--vert);
   font-variant-numeric: tabular-nums;
   margin: 6px 0 4px;
+  text-shadow: 0 0 34px rgba(61, 220, 132, .5), 0 0 6px rgba(61, 220, 132, .35);
 }
-.chiffre-geant.negatif { color: var(--rouge); }
+.chiffre-geant.negatif { color: var(--rouge); text-shadow: 0 0 34px rgba(255, 107, 107, .5), 0 0 6px rgba(255, 107, 107, .35); }
 .sous-ligne { color: var(--texte-doux); font-size: 15px; }
 .sep { opacity: .4; margin: 0 6px; }
 
@@ -99,32 +124,63 @@ body {
 .vert { color: var(--vert); }
 .rouge { color: var(--rouge); }
 
-.resume .ligne {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 7px 0;
-  font-size: 15px;
-  color: var(--texte-doux);
-  border-bottom: 1px solid var(--carte-bord);
+/* Cartes véhicule thermique / électrique / prix retenus : même verre que le
+   reste de l'interface, sans halo ni contour lumineux particulier. */
+.grille-vehicules {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
 }
-.resume .ligne:last-child { border-bottom: 0; }
-.resume b { color: var(--texte); font-weight: 600; text-align: right; }
+.grille-vehicules .carte { margin: 0; padding: 16px; }
+.vehicule-tete {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+.vehicule-icone {
+  width: 19px;
+  height: 19px;
+  flex: none;
+  color: var(--texte-doux);
+}
+.vehicule-valeur {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+}
 
 .actions { display: flex; gap: 12px; margin-bottom: 14px; }
 .btn {
   flex: 1;
   padding: 17px 20px;
-  border-radius: 14px;
+  border-radius: 999px;
   border: 1px solid transparent;
   font: inherit;
   font-weight: 650;
   cursor: pointer;
   min-height: 58px;
+  transition: transform .15s ease, box-shadow .15s ease;
 }
-.btn-primaire { background: var(--vert); color: #06210f; }
-.btn-primaire.actif { background: #f5c451; color: #2a1d00; }
-.btn-secondaire { background: transparent; color: var(--texte); border-color: var(--carte-bord); }
+.btn:active { transform: scale(.98); }
+.btn-primaire {
+  background: linear-gradient(135deg, #52eea8, #23b873);
+  color: #06210f;
+  box-shadow: 0 12px 28px -10px rgba(61, 220, 132, .55);
+}
+.btn-primaire.actif {
+  background: linear-gradient(135deg, #ffd776, #f0a93e);
+  color: #2a1d00;
+  box-shadow: 0 12px 28px -10px rgba(240, 169, 62, .5);
+}
+.btn-secondaire {
+  background: rgba(255, 255, 255, .04);
+  color: var(--texte);
+  border-color: var(--carte-bord);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
 
 .cumul-lignes {
   display: grid;
@@ -134,7 +190,7 @@ body {
   text-align: center;
 }
 .cumul-lignes b { display: block; font-size: 21px; font-variant-numeric: tabular-nums; }
-.cumul-lignes span { color: var(--texte-doux); font-size: 13px; }
+.cumul-lignes span { color: var(--texte-doux); font-size: 13px; letter-spacing: .3px; }
 
 .lien {
   background: none;
@@ -229,6 +285,44 @@ input[type="range"] {
 #diagnostic .ligne b { color: var(--texte); font-weight: 600; text-align: right; }
 #diagnostic .ligne b.ko { color: var(--rouge); }
 
+/* Anneau lumineux des cartes de coût : le contour se remplit de 0 à 100 %
+   selon les centimes affichés (25 ct = quart de tour), boucle complètement
+   au franchissement de chaque euro, puis se recale sur les nouveaux
+   centimes plutôt que de reculer visuellement. */
+@property --progression {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.carte-anneau {
+  position: relative;
+  --progression: 0;
+}
+.carte-anneau::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from -90deg,
+    var(--couleur-anneau) calc(var(--progression) * 360deg),
+    transparent calc(var(--progression) * 360deg) 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  filter: drop-shadow(0 0 5px var(--couleur-anneau));
+  transition: --progression 450ms cubic-bezier(.3, .7, .3, 1);
+  pointer-events: none;
+}
+.carte-anneau.anneau-sans-transition::before { transition: none; }
+.anneau-vert { --couleur-anneau: var(--vert); }
+.anneau-rouge { --couleur-anneau: var(--rouge); }
+@media (prefers-reduced-motion: reduce) {
+  .carte-anneau::before { transition: none; }
+}
+
 /* Millième d'euro : sans valeur monétaire, présent pour la lisibilité du mouvement */
 .millieme {
   font-size: 33.3%;   /* un tiers de la taille des autres chiffres */
@@ -273,9 +367,12 @@ input[type="range"] {
   max-height: min(92vh, 900px);
   display: flex;
   flex-direction: column;
-  background: var(--carte);
+  background: rgba(16, 20, 27, .92);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
   border: 1px solid var(--carte-bord);
   border-radius: var(--rayon);
+  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, .7);
   padding: 20px;
 }
 .cgu-boite h1 { font-size: 20px; margin: 0 0 12px; }

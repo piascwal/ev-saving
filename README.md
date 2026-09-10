@@ -15,6 +15,23 @@ Application web (PWA) qui compte **en direct l'argent économisé** en roulant e
 mesurée par le **GPS de l'appareil**, ce qui la rend utilisable telle quelle
 depuis le navigateur d'une voiture type Tesla.
 
+## Interface
+
+Thème sombre en verre dépoli (glassmorphism) : cartes translucides à bord
+flouté (`backdrop-filter`), police Outfit, étiquettes en petites majuscules
+espacées. Le montant économisé est seul à porter un halo (texte en dégradé
+émeraude avec ombre portée) — les cartes véhicule thermique / véhicule
+électrique / prix retenus n'ont volontairement aucun contour lumineux.
+
+Les deux cartes de coût (électrique, thermique) portent un anneau lumineux
+autour du contour, qui progresse de 0 à 100 % selon les centimes affichés (25 ct
+= quart de tour). À chaque euro entier franchi, l'anneau boucle un tour complet
+avant de se recaler sur les nouveaux centimes, plutôt que de reculer
+visuellement. Implémenté en CSS pur via une propriété personnalisée typée
+(`@property --progression`) et un dégradé conique masqué sur le contour ; sans
+effet dans les navigateurs qui ne supportent pas `@property`, la valeur
+s'applique alors sans transition.
+
 ## HTTPS obligatoire
 
 Les navigateurs ne donnent accès au GPS que depuis une **origine sécurisée** :

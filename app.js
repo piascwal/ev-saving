@@ -1,7 +1,7 @@
 import {
   THERMIQUES, ELECTRIQUES, PRIX_DEFAUT, PRIX_ANCIENS, TARIFS_ELEC,
   CARBURANTS, CARBURANTS_COURT, CO2,
-} from './vehicles.js?v=16';
+} from './vehicles.js?v=17';
 
 const CLE_CONFIG = 'ev-saving:config:v1';
 const CLE_TRAJET = 'ev-saving:trajet:v1';
@@ -269,6 +269,8 @@ function majCompteur() {
   $('#cout-ev').innerHTML = `${nf(b.coutEv, 2)}<small> €</small>`;
   $('#cout-th').innerHTML = `${nf(b.coutTh, 2)}<small> €</small>`;
   $('#economie').classList.toggle('negatif', b.economie < 0);
+  majAnneauCout($('#carte-cout-ev'), b.coutEv, anneaux.ev);
+  majAnneauCout($('#carte-cout-th'), b.coutTh, anneaux.th);
   majCumul(b);
 }
 
@@ -282,6 +284,49 @@ function majResume() {
   $('#resume-ev').textContent = `${ev.nom} — ${nf(consoElectrique(), 1)} kWh/100`;
   $('#resume-prix').textContent =
     `${nf(prixCarburant(), 3)} €/L · ${nf(prixElectricite(), 3)} €/kWh`;
+}
+
+/* ------------------------- anneau des coûts ------------------------ */
+
+// Un euro entier déjà affiché par carte : permet de savoir, au rendu suivant,
+// si la lumière doit boucler avant de se recaler sur les nouveaux centimes.
+const anneaux = {
+  ev: { euroPrecedent: undefined },
+  th: { euroPrecedent: undefined },
+};
+
+// Anime le contour d'une carte de coût comme une jauge : de 0 à 100 % pour
+// aller de 0 à 1 €, puis un tour complet et un recalage à chaque euro
+// supplémentaire, plutôt qu'un contour qui reculerait visuellement.
+function majAnneauCout(el, montant, etatAnneau) {
+  const centimes = Math.max(Math.round(montant * 100), 0);
+  const euros = Math.floor(centimes / 100);
+  const cible = (centimes % 100) / 100;
+  const premierRendu = etatAnneau.euroPrecedent === undefined;
+  const aFranchiUnEuro = !premierRendu && euros > etatAnneau.euroPrecedent;
+  etatAnneau.euroPrecedent = euros;
+
+  if (premierRendu) {
+    el.classList.add('anneau-sans-transition');
+    el.style.setProperty('--progression', cible);
+    el.offsetHeight; // force le rendu de cette valeur avant de réautoriser la transition
+    el.classList.remove('anneau-sans-transition');
+    return;
+  }
+
+  if (aFranchiUnEuro) {
+    el.style.setProperty('--progression', '1');
+    setTimeout(() => {
+      el.classList.add('anneau-sans-transition');
+      el.style.setProperty('--progression', '0');
+      requestAnimationFrame(() => {
+        el.classList.remove('anneau-sans-transition');
+        el.style.setProperty('--progression', String(cible));
+      });
+    }, 480);
+  } else {
+    el.style.setProperty('--progression', String(cible));
+  }
 }
 
 // Le cumul affiché inclut le trajet en cours, pas seulement les trajets déjà
