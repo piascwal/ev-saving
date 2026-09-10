@@ -27,10 +27,18 @@ Les deux cartes de coût (électrique, thermique) portent un anneau lumineux
 autour du contour, qui progresse de 0 à 100 % selon les centimes affichés (25 ct
 = quart de tour). À chaque euro entier franchi, l'anneau boucle un tour complet
 avant de se recaler sur les nouveaux centimes, plutôt que de reculer
-visuellement. Implémenté en CSS pur via une propriété personnalisée typée
-(`@property --progression`) et un dégradé conique masqué sur le contour ; sans
-effet dans les navigateurs qui ne supportent pas `@property`, la valeur
-s'applique alors sans transition.
+visuellement. Le trait dégradé (atténué en début de tour, plein à la tête) et
+trois passes de flou à rayon croissant donnent l'impression d'un faisceau qui
+balaie le contour plutôt qu'un simple liseré. Implémenté en CSS pur via une
+propriété personnalisée typée (`@property --progression`) et un dégradé
+conique masqué sur le contour ; sans effet dans les navigateurs qui ne
+supportent pas `@property`, la valeur s'applique alors sans transition.
+
+La carte du montant économisé porte en plus une texture métal brossé (fines
+hachures diagonales peintes directement sur la carte, donc jamais atténuées par
+son propre flou d'arrière-plan) ; les boutons ont un relief biseauté (reflet
+supérieur, ombre interne basse) et le bouton actif un halo assorti à sa
+couleur.
 
 ## HTTPS obligatoire
 
@@ -117,7 +125,7 @@ Tous les réglages, le trajet en cours et le cumul sont conservés dans le
 ## Mises à jour et cache
 
 `styles.css`, `app.js` et `vehicles.js` sont référencés avec un paramètre de
-version (`?v=15`) et importés ainsi entre eux. À chaque changement de l'un de
+version (`?v=18`) et importés ainsi entre eux. À chaque changement de l'un de
 ces trois fichiers, incrémenter ce numéro partout où il apparaît (les liens
 dans `index.html`, l'import en tête de `app.js`, `VERSION` dans `sw.js`) :
 sans cela, un appareil qui a déjà visité l'application peut charger un fichier

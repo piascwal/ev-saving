@@ -1,7 +1,7 @@
 import {
   THERMIQUES, ELECTRIQUES, PRIX_DEFAUT, PRIX_ANCIENS, TARIFS_ELEC,
   CARBURANTS, CARBURANTS_COURT, CO2,
-} from './vehicles.js?v=17';
+} from './vehicles.js?v=18';
 
 const CLE_CONFIG = 'ev-saving:config:v1';
 const CLE_TRAJET = 'ev-saving:trajet:v1';
@@ -274,16 +274,23 @@ function majCompteur() {
   majCumul(b);
 }
 
+// Première lettre en majuscule pour un usage en tête de ligne (« gazole » -> « Gazole »)
+const capitale = (mot) => mot.charAt(0).toUpperCase() + mot.slice(1);
+
 function majResume() {
   const th = thermiqueActif();
   const ev = evActif();
   const mode = config.modeConso === 'reelle' ? 'réelle' : 'moyenne';
+  const nomCarburant = capitale(CARBURANTS_COURT[th.carburant] || th.carburant);
   $('#etiquette-thermique').textContent = `Coût ${CARBURANTS_COURT[th.carburant] || th.carburant}`;
-  $('#resume-thermique').textContent =
-    `${th.nom} — ${nf(consoThermique(), 1)} L/100 (${mode})`;
-  $('#resume-ev').textContent = `${ev.nom} — ${nf(consoElectrique(), 1)} kWh/100`;
-  $('#resume-prix').textContent =
-    `${nf(prixCarburant(), 3)} €/L · ${nf(prixElectricite(), 3)} €/kWh`;
+  // .textContent (et non .innerHTML) : le nom d'un véhicule personnel vient
+  // d'une saisie libre de l'utilisateur, jamais interprété comme du HTML.
+  $('#resume-thermique-nom').textContent = th.nom;
+  $('#resume-thermique-detail').textContent = `${nf(consoThermique(), 1)} L/100 (${mode})`;
+  $('#resume-ev-nom').textContent = ev.nom;
+  $('#resume-ev-detail').textContent = `${nf(consoElectrique(), 1)} kWh/100`;
+  $('#resume-prix-carburant').textContent = `${nomCarburant} : ${nf(prixCarburant(), 3)} €/L`;
+  $('#resume-prix-electricite').textContent = `Électricité : ${nf(prixElectricite(), 3)} €/kWh`;
 }
 
 /* ------------------------- anneau des coûts ------------------------ */

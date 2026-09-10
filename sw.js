@@ -7,7 +7,7 @@
 // côtés d'un autre resté sur son ancienne version — le nom d'URL différent
 // force chaque fichier à être re-téléchargé ensemble, quel que soit l'état
 // du cache HTTP du navigateur ou du CDN.
-const VERSION = 17;
+const VERSION = 18;
 const CACHE = `ev-saving-v${VERSION}`;
 const FICHIERS = [
   './',

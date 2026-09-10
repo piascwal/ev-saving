@@ -74,7 +74,9 @@ body {
 .vue { max-width: 780px; margin: 0 auto; }
 
 .carte {
-  background: var(--carte);
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, 0) 45%),
+    var(--carte);
   border: 1px solid var(--carte-bord);
   border-radius: var(--rayon);
   backdrop-filter: blur(20px) saturate(150%);
@@ -93,7 +95,18 @@ body {
   letter-spacing: 1.5px;
 }
 
-.compteur { text-align: center; padding: 26px 18px; }
+/* Texture métal brossé, peinte directement sur la carte (donc jamais floutée
+   par son propre backdrop-filter) : deux jeux de fines hachures diagonales
+   pour le grain, plus un reflet diagonal doux pour l'effet de courbure. */
+.compteur {
+  text-align: center;
+  padding: 26px 18px;
+  background:
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, .05) 0px, rgba(255, 255, 255, .05) 1px, transparent 1px, transparent 3px),
+    repeating-linear-gradient(115deg, rgba(0, 0, 0, .16) 0px, rgba(0, 0, 0, .16) 1px, transparent 1px, transparent 8px),
+    linear-gradient(160deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, 0) 45%),
+    var(--carte);
+}
 .chiffre-geant {
   font-size: clamp(56px, 17vw, 104px);
   font-weight: 750;
@@ -145,10 +158,16 @@ body {
   flex: none;
   color: var(--texte-doux);
 }
-.vehicule-valeur {
+.vehicule-nom {
   font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.vehicule-detail {
+  font-size: 14px;
   font-weight: 500;
-  line-height: 1.4;
+  color: var(--texte-doux);
+  margin-top: 2px;
 }
 
 .actions { display: flex; gap: 12px; margin-bottom: 14px; }
@@ -165,21 +184,31 @@ body {
 }
 .btn:active { transform: scale(.98); }
 .btn-primaire {
-  background: linear-gradient(135deg, #52eea8, #23b873);
+  background: linear-gradient(180deg, #74f6bf 0%, #35d68e 45%, #1ea36c 100%);
   color: #06210f;
-  box-shadow: 0 12px 28px -10px rgba(61, 220, 132, .55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .6),
+    inset 0 -3px 7px rgba(0, 50, 25, .35),
+    0 14px 30px -12px rgba(61, 220, 132, .55);
 }
 .btn-primaire.actif {
-  background: linear-gradient(135deg, #ffd776, #f0a93e);
+  background: linear-gradient(180deg, #ffe49a 0%, #f7bd52 45%, #e0972a 100%);
   color: #2a1d00;
-  box-shadow: 0 12px 28px -10px rgba(240, 169, 62, .5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .65),
+    inset 0 -3px 7px rgba(90, 50, 0, .35),
+    0 0 0 3px rgba(240, 169, 62, .35),
+    0 14px 34px -10px rgba(240, 169, 62, .65);
 }
 .btn-secondaire {
-  background: rgba(255, 255, 255, .04);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .02));
   color: var(--texte);
   border-color: var(--carte-bord);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .14),
+    inset 0 -2px 6px rgba(0, 0, 0, .3);
 }
 
 .cumul-lignes {
@@ -305,20 +334,29 @@ input[type="range"] {
   inset: 0;
   box-sizing: border-box;
   border-radius: inherit;
-  padding: 2px;
+  padding: 3px;
+  /* Dégradé de la couleur atténuée (départ, 0°) vers la couleur pleine
+     (tête du faisceau, à l'angle de la progression) : lu comme un trait de
+     lumière qui balaye le contour plutôt qu'un arc de couleur uniforme. */
   background: conic-gradient(from -90deg,
+    var(--couleur-anneau-douce) 0deg,
     var(--couleur-anneau) calc(var(--progression) * 360deg),
-    transparent calc(var(--progression) * 360deg) 360deg);
+    transparent calc(var(--progression) * 360deg + .01deg) 360deg);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  filter: drop-shadow(0 0 5px var(--couleur-anneau));
+  /* Trois passes de flou à rayon croissant : un halo qui déborde franchement
+     du trait plutôt qu'un simple liseré éclairci. */
+  filter:
+    drop-shadow(0 0 2px var(--couleur-anneau))
+    drop-shadow(0 0 9px var(--couleur-anneau))
+    drop-shadow(0 0 20px var(--couleur-anneau));
   transition: --progression 450ms cubic-bezier(.3, .7, .3, 1);
   pointer-events: none;
 }
 .carte-anneau.anneau-sans-transition::before { transition: none; }
-.anneau-vert { --couleur-anneau: var(--vert); }
-.anneau-rouge { --couleur-anneau: var(--rouge); }
+.anneau-vert { --couleur-anneau: var(--vert); --couleur-anneau-douce: rgba(61, 220, 132, .12); }
+.anneau-rouge { --couleur-anneau: var(--rouge); --couleur-anneau-douce: rgba(255, 107, 107, .12); }
 @media (prefers-reduced-motion: reduce) {
   .carte-anneau::before { transition: none; }
 }
