@@ -1,7 +1,7 @@
 import {
   THERMIQUES, ELECTRIQUES, PRIX_DEFAUT, PRIX_ANCIENS, TARIFS_ELEC,
   CARBURANTS, CARBURANTS_COURT, CO2,
-} from './vehicles.js?v=20';
+} from './vehicles.js?v=21';
 
 const CLE_CONFIG = 'ev-saving:config:v1';
 const CLE_TRAJET = 'ev-saving:trajet:v1';
@@ -818,6 +818,16 @@ document.querySelectorAll('.tab').forEach((onglet) => {
     document.querySelectorAll('.tab').forEach((o) => o.classList.toggle('is-active', o === onglet));
     $('#vue-compteur').hidden = onglet.dataset.vue !== 'compteur';
     $('#vue-reglages').hidden = onglet.dataset.vue !== 'reglages';
+  });
+});
+
+// Sous-onglets des réglages : véhicules, prix, général.
+document.querySelectorAll('.sous-onglet').forEach((onglet) => {
+  onglet.addEventListener('click', () => {
+    document.querySelectorAll('.sous-onglet')
+      .forEach((o) => o.classList.toggle('is-active', o === onglet));
+    document.querySelectorAll('.panneau-reglages')
+      .forEach((p) => { p.hidden = p.id !== `panneau-${onglet.dataset.panneau}`; });
   });
 });
 

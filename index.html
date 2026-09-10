@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="styles.css?v=20">
+<link rel="stylesheet" href="styles.css?v=21">
 </head>
 <body>
 
@@ -243,6 +243,14 @@
 <!-- ------------------------------ RÉGLAGES ------------------------------ -->
 <main id="vue-reglages" class="vue" hidden>
 
+  <nav class="sous-onglets" role="tablist">
+    <button class="sous-onglet is-active" data-panneau="vehicules" role="tab">Véhicules</button>
+    <button class="sous-onglet" data-panneau="prix" role="tab">Prix</button>
+    <button class="sous-onglet" data-panneau="general" role="tab">Général</button>
+  </nav>
+
+  <div id="panneau-vehicules" class="panneau-reglages">
+
   <section class="carte">
     <h2>Véhicule thermique de référence</h2>
     <label class="champ">
@@ -304,6 +312,10 @@
       véhicule électrique lors du choix d'un modèle.</p>
   </section>
 
+  </div>
+
+  <div id="panneau-prix" class="panneau-reglages" hidden>
+
   <section class="carte">
     <h2>Prix à la pompe</h2>
     <label class="champ"><span>Gazole (€/L)</span>
@@ -360,6 +372,10 @@
       Mettez 0 €/kWh si votre recharge ne vous coûte rien (solaire, borne au travail).</p>
   </section>
 
+  </div>
+
+  <div id="panneau-general" class="panneau-reglages" hidden>
+
   <section class="carte">
     <h2>Affichage</h2>
     <label class="bascule">
@@ -376,11 +392,13 @@
       responsabilité quant à l'usage qui en est fait.</p>
     <button id="btn-revoir-cgu" class="btn btn-secondaire">Relire les conditions</button>
   </section>
+
+  </div>
 </main>
 
 <p class="rappel">Ne manipulez pas cette application en conduisant :
   passager, ou véhicule à l'arrêt.</p>
 
-<script type="module" src="app.js?v=20"></script>
+<script type="module" src="app.js?v=21"></script>
 </body>
 </html>

@@ -129,6 +129,9 @@ en usage. Les deux se changent dans les réglages.
   chacun restant modifiable au chiffre près ; `0` si la recharge est gratuite.
 - **Écran allumé** pendant le trajet (Wake Lock), utile à bord.
 
+Les réglages sont répartis en trois sous-onglets — **Véhicules**, **Prix**,
+**Général** — plutôt qu'empilés sur un seul écran.
+
 Tous les réglages, le trajet en cours et le cumul sont conservés dans le
 `localStorage` de l'appareil.
 
