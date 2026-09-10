@@ -17,7 +17,13 @@
     rgba(255, 255, 255, .015) 38.7%,
     rgba(255, 255, 255, 0) 100%);
   /* Épaisseur : la moitié basse s'assombrit, comme un volume éclairé par le haut */
-  --volume: linear-gradient(180deg, rgba(255, 255, 255, .035) 0%, rgba(0, 0, 0, .18) 100%);
+  --volume: linear-gradient(180deg,
+    rgba(255, 255, 255, .07) 0%,
+    rgba(255, 255, 255, .01) 45%,
+    rgba(0, 0, 0, .10) 72%,
+    rgba(0, 0, 0, .28) 100%);
+  /* Lumière rasante retenue par les bords, comme l'épaisseur d'une dalle de verre */
+  --tranche: radial-gradient(120% 80% at 50% -20%, rgba(255, 255, 255, .10), transparent 60%);
   --texte: #f3f6fa;
   --texte-doux: #93a0b3;
   --vert: #3ddc84;
@@ -90,16 +96,19 @@ body {
 
 .carte {
   position: relative;
-  background: var(--vitre), var(--grain), var(--volume), var(--carte);
+  background: var(--vitre), var(--tranche), var(--grain), var(--volume), var(--carte);
   border: 1px solid var(--carte-bord);
   border-radius: var(--rayon);
   backdrop-filter: blur(22px) saturate(160%);
   -webkit-backdrop-filter: blur(22px) saturate(160%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .2),    /* arête haute éclairée */
-    inset 0 -1px 0 rgba(0, 0, 0, .45),        /* arête basse dans l'ombre */
-    0 12px 26px -12px rgba(0, 0, 0, .8),      /* la carte décolle du fond */
-    0 3px 8px -4px rgba(0, 0, 0, .6);
+    inset 0 1px 0 rgba(255, 255, 255, .28),      /* arête haute éclairée */
+    inset 0 -1px 0 rgba(0, 0, 0, .55),           /* arête basse dans l'ombre */
+    inset 1px 0 0 rgba(255, 255, 255, .07),      /* tranches latérales : la */
+    inset -1px 0 0 rgba(255, 255, 255, .07),     /* dalle a une épaisseur */
+    inset 0 -16px 26px -22px rgba(0, 0, 0, .8),  /* creux interne vers le bas */
+    0 18px 34px -14px rgba(0, 0, 0, .85),        /* la carte décolle du fond */
+    0 4px 10px -4px rgba(0, 0, 0, .65);
   padding: 18px;
   margin-bottom: 14px;
 }
@@ -121,6 +130,7 @@ body {
   padding: 26px 18px;
   background:
     var(--vitre),
+    var(--tranche),
     repeating-linear-gradient(115deg, rgba(255, 255, 255, .05) 0px, rgba(255, 255, 255, .05) 1px, transparent 1px, transparent 3px),
     repeating-linear-gradient(115deg, rgba(0, 0, 0, .16) 0px, rgba(0, 0, 0, .16) 1px, transparent 1px, transparent 8px),
     var(--volume),
@@ -164,12 +174,12 @@ body {
   gap: 12px;
   margin-bottom: 14px;
 }
-.grille-vehicules .carte { margin: 0; padding: 16px; }
+.grille-vehicules .carte { margin: 0; padding: 18px 18px 20px; }
 .vehicule-tete {
   display: flex;
   align-items: center;
-  gap: 9px;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 .vehicule-icone {
   width: 19px;
@@ -180,13 +190,13 @@ body {
 .vehicule-nom {
   font-size: 15px;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
 }
 .vehicule-detail {
   font-size: 14px;
   font-weight: 500;
   color: var(--texte-doux);
-  margin-top: 2px;
+  margin-top: 7px;
 }
 
 .actions { display: flex; gap: 12px; margin-bottom: 14px; }
@@ -202,33 +212,39 @@ body {
   transition: transform .15s ease, box-shadow .15s ease;
 }
 .btn:active { transform: scale(.98); }
-.btn-primaire {
-  background: var(--vitre), linear-gradient(180deg, #74f6bf 0%, #35d68e 45%, #1ea36c 100%);
-  color: #06210f;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .6),
-    inset 0 -3px 7px rgba(0, 50, 25, .35),
-    0 14px 30px -12px rgba(61, 220, 132, .55);
-}
-.btn-primaire.actif {
-  background: var(--vitre), linear-gradient(180deg, #ffe49a 0%, #f7bd52 45%, #e0972a 100%);
-  color: #2a1d00;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .65),
-    inset 0 -3px 7px rgba(90, 50, 0, .35),
-    0 0 0 3px rgba(240, 169, 62, .35),
-    0 14px 34px -10px rgba(240, 169, 62, .65);
-}
+
+/* Boutons métal brossé : même matière pour tous, comme sur la maquette.
+   C'est le halo du contour, pas la couleur du fond, qui signale l'état. */
+.btn-primaire,
 .btn-secondaire {
-  background: var(--vitre), var(--volume), rgba(255, 255, 255, .06);
+  background:
+    var(--vitre),
+    var(--grain),
+    linear-gradient(180deg, #6d757f 0%, #4c545e 42%, #333a43 100%);
   color: var(--texte);
-  border-color: var(--carte-bord);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  border-color: rgba(255, 255, 255, .16);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .2),
-    inset 0 -1px 0 rgba(0, 0, 0, .45),
-    0 10px 22px -12px rgba(0, 0, 0, .8);
+    inset 0 1px 0 rgba(255, 255, 255, .34),
+    inset 0 -2px 4px rgba(0, 0, 0, .5),
+    0 10px 22px -10px rgba(0, 0, 0, .85);
+}
+/* Halo vert : action disponible (démarrer) */
+.btn-primaire {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .34),
+    inset 0 -2px 4px rgba(0, 0, 0, .5),
+    0 0 0 1px rgba(61, 220, 132, .55),
+    0 0 14px rgba(61, 220, 132, .45),
+    0 10px 22px -10px rgba(0, 0, 0, .85);
+}
+/* Halo ambré : trajet en cours (mettre en pause) */
+.btn-primaire.actif {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .34),
+    inset 0 -2px 4px rgba(0, 0, 0, .5),
+    0 0 0 1px rgba(240, 180, 80, .7),
+    0 0 16px rgba(240, 180, 80, .5),
+    0 10px 22px -10px rgba(0, 0, 0, .85);
 }
 
 .cumul-lignes {
@@ -338,47 +354,48 @@ input[type="range"] {
    selon les centimes affichés (25 ct = quart de tour), boucle complètement
    au franchissement de chaque euro, puis se recale sur les nouveaux
    centimes plutôt que de reculer visuellement. */
-@property --progression {
-  syntax: '<number>';
+/* Tour de piste : à chaque euro économisé de plus, un halo vert parcourt une
+   fois le contour de la carte du compteur. L'arc lumineux est un dégradé
+   conique masqué sur le contour, et c'est son angle de départ qui tourne —
+   faire pivoter l'élément lui-même déformerait le rectangle arrondi. */
+@property --tour {
+  syntax: '<angle>';
   inherits: true;
-  initial-value: 0;
+  initial-value: 0deg;
 }
 
-.carte-anneau {
-  position: relative;
-  --progression: 0;
-}
-.carte-anneau::before {
+.compteur::before {
   content: '';
   position: absolute;
   inset: 0;
   box-sizing: border-box;
   border-radius: inherit;
   padding: 3px;
-  /* Dégradé de la couleur atténuée (départ, 0°) vers la couleur pleine
-     (tête du faisceau, à l'angle de la progression) : lu comme un trait de
-     lumière qui balaye le contour plutôt qu'un arc de couleur uniforme. */
-  background: conic-gradient(from -90deg,
-    var(--couleur-anneau-douce) 0deg,
-    var(--couleur-anneau) calc(var(--progression) * 360deg),
-    transparent calc(var(--progression) * 360deg + .01deg) 360deg);
+  background: conic-gradient(from var(--tour),
+    transparent 0deg,
+    rgba(61, 220, 132, .18) 26deg,
+    var(--vert) 72deg,
+    transparent 76deg);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  /* Trois passes de flou à rayon croissant : un halo qui déborde franchement
-     du trait plutôt qu'un simple liseré éclairci. */
   filter:
-    drop-shadow(0 0 2px var(--couleur-anneau))
-    drop-shadow(0 0 9px var(--couleur-anneau))
-    drop-shadow(0 0 20px var(--couleur-anneau));
-  transition: --progression 450ms cubic-bezier(.3, .7, .3, 1);
+    drop-shadow(0 0 2px var(--vert))
+    drop-shadow(0 0 10px var(--vert))
+    drop-shadow(0 0 22px var(--vert));
+  opacity: 0;
   pointer-events: none;
 }
-.carte-anneau.anneau-sans-transition::before { transition: none; }
-.anneau-vert { --couleur-anneau: var(--vert); --couleur-anneau-douce: rgba(61, 220, 132, .12); }
-.anneau-rouge { --couleur-anneau: var(--rouge); --couleur-anneau-douce: rgba(255, 107, 107, .12); }
+.compteur.tour-euro::before { animation: tour-de-piste 1100ms cubic-bezier(.4, 0, .3, 1); }
+
+@keyframes tour-de-piste {
+  0%   { opacity: 0; --tour: -100deg; }
+  12%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; --tour: 280deg; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .carte-anneau::before { transition: none; }
+  .compteur.tour-euro::before { animation: none; }
 }
 
 /* Millième d'euro : sans valeur monétaire, présent pour la lisibilité du mouvement */

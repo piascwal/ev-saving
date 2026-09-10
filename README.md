@@ -23,16 +23,17 @@ espacées. Le montant économisé est seul à porter un halo (texte en dégradé
 émeraude avec ombre portée) — les cartes véhicule thermique / véhicule
 électrique / prix retenus n'ont volontairement aucun contour lumineux.
 
-Les deux cartes de coût (électrique, thermique) portent un anneau lumineux
-autour du contour, qui progresse de 0 à 100 % selon les centimes affichés (25 ct
-= quart de tour). À chaque euro entier franchi, l'anneau boucle un tour complet
-avant de se recaler sur les nouveaux centimes, plutôt que de reculer
-visuellement. Le trait dégradé (atténué en début de tour, plein à la tête) et
-trois passes de flou à rayon croissant donnent l'impression d'un faisceau qui
-balaie le contour plutôt qu'un simple liseré. Implémenté en CSS pur via une
-propriété personnalisée typée (`@property --progression`) et un dégradé
-conique masqué sur le contour ; sans effet dans les navigateurs qui ne
-supportent pas `@property`, la valeur s'applique alors sans transition.
+À chaque euro économisé de plus, un **halo vert fait un tour rapide** du
+contour de la carte du compteur. L'arc est un dégradé conique masqué sur le
+contour, dont c'est l'angle de départ qui tourne — faire pivoter l'élément
+lui-même déformerait le rectangle arrondi. Trois passes de flou à rayon
+croissant lui donnent l'épaisseur d'un faisceau plutôt que d'un liseré.
+Implémenté en CSS via une propriété personnalisée typée (`@property --tour`) ;
+le JavaScript se contente de poser la classe au franchissement.
+
+Les boutons reprennent la matière métal brossé de la maquette : même fond pour
+tous, c'est le halo du contour qui signale l'état — vert pour « démarrer »,
+ambré pendant le trajet.
 
 L'aspect vitrifié en relief vient de trois couches empilées sur chaque carte
 et sur les boutons : un **reflet coupé net** en diagonale (deux points d'arrêt

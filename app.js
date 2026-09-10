@@ -1,7 +1,7 @@
 import {
   THERMIQUES, ELECTRIQUES, PRIX_DEFAUT, PRIX_ANCIENS, TARIFS_ELEC,
   CARBURANTS, CARBURANTS_COURT, CO2,
-} from './vehicles.js?v=19';
+} from './vehicles.js?v=20';
 
 const CLE_CONFIG = 'ev-saving:config:v1';
 const CLE_TRAJET = 'ev-saving:trajet:v1';
@@ -269,8 +269,7 @@ function majCompteur() {
   $('#cout-ev').innerHTML = `${nf(b.coutEv, 2)}<small> €</small>`;
   $('#cout-th').innerHTML = `${nf(b.coutTh, 2)}<small> €</small>`;
   $('#economie').classList.toggle('negatif', b.economie < 0);
-  majAnneauCout($('#carte-cout-ev'), b.coutEv, anneaux.ev);
-  majAnneauCout($('#carte-cout-th'), b.coutTh, anneaux.th);
+  majTourEuro(b.economie);
   majCumul(b);
 }
 
@@ -293,47 +292,28 @@ function majResume() {
   $('#resume-prix-electricite').textContent = `Électricité : ${nf(prixElectricite(), 3)} €/kWh`;
 }
 
-/* ------------------------- anneau des coûts ------------------------ */
+/* --------------------- tour de piste à chaque euro ------------------ */
 
-// Un euro entier déjà affiché par carte : permet de savoir, au rendu suivant,
-// si la lumière doit boucler avant de se recaler sur les nouveaux centimes.
-const anneaux = {
-  ev: { euroPrecedent: undefined },
-  th: { euroPrecedent: undefined },
-};
+// Dernier euro entier déjà atteint : sert à ne déclencher le tour de piste
+// qu'au franchissement, et jamais au tout premier rendu.
+const tourEuro = { euroPrecedent: undefined };
 
-// Anime le contour d'une carte de coût comme une jauge : de 0 à 100 % pour
-// aller de 0 à 1 €, puis un tour complet et un recalage à chaque euro
-// supplémentaire, plutôt qu'un contour qui reculerait visuellement.
-function majAnneauCout(el, montant, etatAnneau) {
-  const centimes = Math.max(Math.round(montant * 100), 0);
-  const euros = Math.floor(centimes / 100);
-  const cible = (centimes % 100) / 100;
-  const premierRendu = etatAnneau.euroPrecedent === undefined;
-  const aFranchiUnEuro = !premierRendu && euros > etatAnneau.euroPrecedent;
-  etatAnneau.euroPrecedent = euros;
+// À chaque euro économisé de plus, un halo vert fait un tour rapide de la
+// carte du compteur. L'animation vit entièrement en CSS ; ici on se contente
+// de poser la classe, en forçant un reflow pour qu'un franchissement rapproché
+// relance l'animation au lieu d'être ignoré.
+function majTourEuro(economie) {
+  const euros = Math.floor(Math.max(economie, 0));
+  const premierRendu = tourEuro.euroPrecedent === undefined;
+  const aFranchi = !premierRendu && euros > tourEuro.euroPrecedent;
+  tourEuro.euroPrecedent = euros;
+  if (!aFranchi) return;
 
-  if (premierRendu) {
-    el.classList.add('anneau-sans-transition');
-    el.style.setProperty('--progression', cible);
-    el.offsetHeight; // force le rendu de cette valeur avant de réautoriser la transition
-    el.classList.remove('anneau-sans-transition');
-    return;
-  }
-
-  if (aFranchiUnEuro) {
-    el.style.setProperty('--progression', '1');
-    setTimeout(() => {
-      el.classList.add('anneau-sans-transition');
-      el.style.setProperty('--progression', '0');
-      requestAnimationFrame(() => {
-        el.classList.remove('anneau-sans-transition');
-        el.style.setProperty('--progression', String(cible));
-      });
-    }, 480);
-  } else {
-    el.style.setProperty('--progression', String(cible));
-  }
+  const carte = $('.compteur');
+  carte.classList.remove('tour-euro');
+  carte.offsetHeight;
+  carte.classList.add('tour-euro');
+  carte.addEventListener('animationend', () => carte.classList.remove('tour-euro'), { once: true });
 }
 
 // Le cumul affiché inclut le trajet en cours, pas seulement les trajets déjà
