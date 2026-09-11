@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="styles.css?v=21">
+<link rel="stylesheet" href="styles.css?v=22">
 </head>
 <body>
 
@@ -160,6 +160,22 @@
     </div>
   </section>
 
+  <section class="carte cumul">
+    <div class="etiquette">Depuis le début (tous trajets)</div>
+    <div class="cumul-lignes">
+      <div><b id="cumul-euros">0,00 €</b><span>économisés</span></div>
+      <div><b id="cumul-km">0 km</b><span>parcourus</span></div>
+      <div><b id="cumul-co2">0 kg</b><span>de CO₂ évités</span></div>
+    </div>
+    <button id="btn-vider-cumul" class="lien">Remettre le cumul à zéro</button>
+  </section>
+
+  <div class="actions-discretes">
+    <button id="btn-reinit" class="btn-discret">Terminer ce trajet et le cumuler</button>
+  </div>
+
+  <p id="etat-gps" class="etat">GPS inactif</p>
+
   <section class="grille-vehicules">
     <div class="carte vehicule">
       <div class="vehicule-tete">
@@ -204,22 +220,6 @@
     </div>
   </section>
 
-  <div class="actions">
-    <button id="btn-demarrer" class="btn btn-primaire">Démarrer le trajet</button>
-    <button id="btn-reinit" class="btn btn-secondaire">Réinitialiser</button>
-  </div>
-
-  <section class="carte cumul">
-    <div class="etiquette">Depuis le début (tous trajets)</div>
-    <div class="cumul-lignes">
-      <div><b id="cumul-euros">0,00 €</b><span>économisés</span></div>
-      <div><b id="cumul-km">0 km</b><span>parcourus</span></div>
-      <div><b id="cumul-co2">0 kg</b><span>de CO₂ évités</span></div>
-    </div>
-    <button id="btn-vider-cumul" class="lien">Remettre le cumul à zéro</button>
-  </section>
-
-  <p id="etat-gps" class="etat">GPS inactif</p>
 
   <details id="diagnostic" class="carte">
     <summary>Diagnostic GPS</summary>
@@ -399,6 +399,6 @@
 <p class="rappel">Ne manipulez pas cette application en conduisant :
   passager, ou véhicule à l'arrêt.</p>
 
-<script type="module" src="app.js?v=21"></script>
+<script type="module" src="app.js?v=22"></script>
 </body>
 </html>

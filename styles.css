@@ -233,6 +233,25 @@ body {
 }
 
 .actions { display: flex; gap: 12px; margin-bottom: 14px; }
+
+/* La mesure étant automatique, clore un trajet est une action rare : bouton
+   discret, à l'écart du regard pendant la conduite. */
+.actions-discretes {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.btn-discret {
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--carte-bord);
+  background: rgba(255, 255, 255, .04);
+  color: var(--texte-doux);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn-discret:active { transform: scale(.98); }
 .btn {
   flex: 1;
   padding: 17px 20px;

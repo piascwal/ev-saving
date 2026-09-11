@@ -32,8 +32,13 @@ Implémenté en CSS via une propriété personnalisée typée (`@property --tour
 le JavaScript se contente de poser la classe au franchissement.
 
 Les boutons reprennent la matière métal brossé de la maquette : même fond pour
-tous, c'est le halo du contour qui signale l'état — vert pour « démarrer »,
-ambré pendant le trajet.
+tous, c'est le halo du contour qui signale l'état. Le compteur n'en garde qu'un
+seul, volontairement discret et de petite taille (« Terminer ce trajet et le
+cumuler ») : la mesure n'a plus de bouton de départ, elle se lance d'elle-même.
+
+Pendant la conduite, la ligne sous le compteur montre le **cumul « Depuis le
+début »** ; les cartes véhicule thermique / véhicule électrique / prix retenus,
+qui n'apprennent rien en roulant, sont renvoyées plus bas dans la page.
 
 L'aspect vitrifié en relief vient de trois couches empilées sur chaque carte
 et sur les boutons : un **reflet coupé net** en diagonale (deux points d'arrêt
@@ -67,17 +72,21 @@ le véhicule.
 1. L'application demande l'autorisation d'accéder à la position (bouton
    « Autoriser le GPS »). Aucune donnée ne sort de l'appareil : pas de serveur,
    pas d'appel réseau, tout est stocké dans le navigateur.
-2. « Démarrer le trajet » lance le suivi (`watchPosition`) et cumule la distance
-   parcourue entre chaque point, en filtrant le bruit GPS.
+2. **Le suivi démarre tout seul**, sans rien avoir à presser : dès que la
+   position est autorisée, `watchPosition` tourne et la distance s'accumule
+   tant que l'application reste ouverte. À la visite suivante, l'autorisation
+   étant déjà accordée, la mesure reprend au chargement de la page.
 3. Le compteur affiche l'économie du trajet, le coût électrique, le coût
    thermique équivalent, la vitesse et le CO₂ évité. Sur le montant économisé
    uniquement, un troisième chiffre après la virgule reste affiché en gris —
    il n'a pas cours monétaire — et chaque chiffre qui change s'anime d'un léger
    mouvement, façon compteur mécanique ; le reste s'affiche normalement.
-4. « Réinitialiser » clôt le trajet et l'ajoute au cumul de tous les trajets. La
-   carte « Depuis le début » inclut déjà le trajet en cours avant même ce clic :
-   elle avance en direct, sans animation ni millième — ces effets restent
-   réservés au montant économisé sur le trajet.
+4. « Terminer ce trajet et le cumuler » clôt le trajet et l'ajoute au cumul de
+   tous les trajets, après confirmation. La carte « Depuis le début » inclut
+   déjà le trajet en cours avant même ce clic : elle avance en direct, sans
+   animation ni millième — ces effets restent réservés au montant économisé sur
+   le trajet. Le suivi, lui, ne s'arrête pas : un nouveau trajet commence
+   aussitôt.
 
 En cas de problème, le panneau **Diagnostic GPS** en bas du compteur indique si
 la page est sécurisée, si l'API est disponible, l'état de l'autorisation, le
@@ -138,7 +147,7 @@ Tous les réglages, le trajet en cours et le cumul sont conservés dans le
 ## Mises à jour et cache
 
 `styles.css`, `app.js` et `vehicles.js` sont référencés avec un paramètre de
-version (`?v=18`) et importés ainsi entre eux. À chaque changement de l'un de
+version (`?v=22`) et importés ainsi entre eux. À chaque changement de l'un de
 ces trois fichiers, incrémenter ce numéro partout où il apparaît (les liens
 dans `index.html`, l'import en tête de `app.js`, `VERSION` dans `sw.js`) :
 sans cela, un appareil qui a déjà visité l'application peut charger un fichier

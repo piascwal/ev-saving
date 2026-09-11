@@ -1,7 +1,7 @@
 import {
   THERMIQUES, ELECTRIQUES, PRIX_DEFAUT, PRIX_ANCIENS, TARIFS_ELEC,
   CARBURANTS, CARBURANTS_COURT, CO2,
-} from './vehicles.js?v=21';
+} from './vehicles.js?v=22';
 
 const CLE_CONFIG = 'ev-saving:config:v1';
 const CLE_TRAJET = 'ev-saving:trajet:v1';
@@ -317,8 +317,8 @@ function majTourEuro(economie) {
 }
 
 // Le cumul affiché inclut le trajet en cours, pas seulement les trajets déjà
-// clôturés : sans cela, cette carte restait figée entre deux appuis sur
-// « Réinitialiser » pendant que le compteur du trajet, lui, avançait. Il
+// clôturés : sans cela, cette carte restait figée entre deux clôtures de
+// trajet pendant que le compteur du trajet, lui, avançait. Il
 // s'affiche normalement, sans millième grisé ni transition : cet effet reste
 // réservé au montant économisé sur le trajet en cours.
 function majCumul(b = bilan(trajet.distanceM)) {
@@ -330,11 +330,6 @@ function majCumul(b = bilan(trajet.distanceM)) {
   $('#cumul-co2').textContent = `${nf(co2, 0)} kg`;
 }
 
-function majBoutons() {
-  $('#btn-demarrer').textContent = enCours() ? 'Mettre en pause' : 'Démarrer le trajet';
-  $('#btn-demarrer').classList.toggle('actif', enCours());
-}
-
 function etat(texte, erreur = false) {
   const el = $('#etat-gps');
   el.textContent = texte;
@@ -344,7 +339,6 @@ function etat(texte, erreur = false) {
 function toutAfficher() {
   majResume();
   majCompteur(); // met aussi à jour le cumul
-  majBoutons();
 }
 
 /* ------------------------------ GPS ------------------------------ */
@@ -575,7 +569,7 @@ function surPosition(pos, source = 'watchPosition') {
   if (enCours()) {
     etat(`GPS actif — précision ±${Math.round(brut.precision)} m (signal ${qualiteSignal(brut.precision)})`);
   }
-  else etat('GPS prêt — appuyez sur « Démarrer le trajet »');
+  else etat('GPS prêt');
   majCompteur();
 }
 
@@ -676,7 +670,6 @@ function demarrerSuivi() {
 
   batteur = setInterval(battre, 1000);
   etat('Recherche du signal GPS…');
-  majBoutons();
   demanderWakeLock();
 }
 
@@ -694,9 +687,8 @@ function arreterSuivi() {
   trajet.vitesse = 0;
   ecrire(CLE_TRAJET, trajet);
   relacherWakeLock();
-  majBoutons();
   majCompteur();
-  etat('GPS en pause');
+  etat('GPS suspendu');
 }
 
 /* --------------------------- wake lock --------------------------- */
@@ -780,8 +772,8 @@ function demanderAutorisation() {
     (pos) => {
       clearTimeout(surveillanceDemande);
       surPosition(pos);
-      etat('GPS autorisé — prêt à démarrer');
       majPermissionAffichee('granted');
+      demarrerSuivi();
     },
     (err) => {
       clearTimeout(surveillanceDemande);
@@ -805,7 +797,9 @@ async function initAutorisation() {
     zone.textContent = "La localisation est bloquée pour ce site. Réautorisez-la dans les réglages du navigateur, puis rechargez la page.";
     zone.hidden = false;
   }
-  if (etatPerm === 'granted') demanderAutorisation(); // récupère un premier point
+  // La mesure démarre d'elle-même : tant que l'application est ouverte et la
+  // position autorisée, les kilomètres s'accumulent sans rien avoir à presser.
+  if (etatPerm === 'granted') demanderAutorisation();
 }
 
 $('#btn-autoriser').addEventListener('click', demanderAutorisation);
@@ -829,11 +823,6 @@ document.querySelectorAll('.sous-onglet').forEach((onglet) => {
     document.querySelectorAll('.panneau-reglages')
       .forEach((p) => { p.hidden = p.id !== `panneau-${onglet.dataset.panneau}`; });
   });
-});
-
-$('#btn-demarrer').addEventListener('click', () => {
-  if (enCours()) arreterSuivi();
-  else demarrerSuivi();
 });
 
 $('#btn-reinit').addEventListener('click', () => {
