@@ -1,7 +1,7 @@
 import {
   THERMIQUES, ELECTRIQUES, PRIX_DEFAUT, PRIX_ANCIENS, TARIFS_ELEC,
   CARBURANTS, CARBURANTS_COURT, CO2,
-} from './vehicles.js?v=22';
+} from './vehicles.js?v=23';
 
 const CLE_CONFIG = 'ev-saving:config:v1';
 const CLE_TRAJET = 'ev-saving:trajet:v1';
@@ -321,13 +321,19 @@ function majTourEuro(economie) {
 // trajet pendant que le compteur du trajet, lui, avançait. Il
 // s'affiche normalement, sans millième grisé ni transition : cet effet reste
 // réservé au montant économisé sur le trajet en cours.
+//
+// Les kilomètres et le CO₂ portent une décimale, et non un chiffre rond : à
+// l'unité près, le cumul ne bougeait qu'une fois par kilomètre (et une fois
+// tous les sept kilomètres pour le CO₂), ce qui donnait l'impression d'une
+// carte figée que seule la clôture d'un trajet réveillait. La décimale la
+// fait avancer tous les cent mètres, au rythme du compteur du trajet.
 function majCumul(b = bilan(trajet.distanceM)) {
   const euros = cumul.euros + b.economie;
   const km = cumul.km + b.km;
   const co2 = Math.max(cumul.co2 + b.co2, 0);
   $('#cumul-euros').textContent = nfEuro.format(euros);
-  $('#cumul-km').textContent = `${nf(km, 0)} km`;
-  $('#cumul-co2').textContent = `${nf(co2, 0)} kg`;
+  $('#cumul-km').textContent = `${nf(km, 1)} km`;
+  $('#cumul-co2').textContent = `${nf(co2, 1)} kg`;
 }
 
 function etat(texte, erreur = false) {

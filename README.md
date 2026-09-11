@@ -85,8 +85,11 @@ le véhicule.
    tous les trajets, après confirmation. La carte « Depuis le début » inclut
    déjà le trajet en cours avant même ce clic : elle avance en direct, sans
    animation ni millième — ces effets restent réservés au montant économisé sur
-   le trajet. Le suivi, lui, ne s'arrête pas : un nouveau trajet commence
-   aussitôt.
+   le trajet. La clôture ne provoque donc aucun saut : le total était déjà à
+   jour. Le suivi, lui, ne s'arrête pas : un nouveau trajet commence aussitôt.
+   Les kilomètres et le CO₂ du cumul portent une décimale : à l'unité près, ils
+   ne bougeaient qu'une fois par kilomètre (et une fois tous les sept kilomètres
+   pour le CO₂), ce qui donnait l'impression d'une carte figée.
 
 En cas de problème, le panneau **Diagnostic GPS** en bas du compteur indique si
 la page est sécurisée, si l'API est disponible, l'état de l'autorisation, le
@@ -147,7 +150,7 @@ Tous les réglages, le trajet en cours et le cumul sont conservés dans le
 ## Mises à jour et cache
 
 `styles.css`, `app.js` et `vehicles.js` sont référencés avec un paramètre de
-version (`?v=22`) et importés ainsi entre eux. À chaque changement de l'un de
+version (`?v=23`) et importés ainsi entre eux. À chaque changement de l'un de
 ces trois fichiers, incrémenter ce numéro partout où il apparaît (les liens
 dans `index.html`, l'import en tête de `app.js`, `VERSION` dans `sw.js`) :
 sans cela, un appareil qui a déjà visité l'application peut charger un fichier
